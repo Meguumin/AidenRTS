@@ -2,65 +2,41 @@
 
 
 
-void Selection( Vector2 mousepoint, Rectangle& sBox, Soldier& SoldierOBJ,  std::vector<Soldier> GridOSoldier)
+// memory issue have to switch out vector for list
+void CurrentlySelected(std::vector<Soldier*>& SoldierSelected,std::vector<Soldier>& GridOSoldier, Vector2 mousepoint, Rectangle& sBox, int i)
 {
+  
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsKeyDown(KEY_LEFT_SHIFT))
-    {
-        if (CheckCollisionPointRec(mousepoint, SoldierOBJ.hitbox))
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_SHIFT) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            
-            SoldierOBJ.isselected = true;
-        }
-    }
-
-
-    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-    {
-        if (CheckCollisionRecs(sBox, SoldierOBJ.hitbox))
-        {
-           
-            SoldierOBJ.isselected = true;
-        }
-    }
-
-}
-
-
-std::vector<Soldier*> CurrentlySelected(std::vector<Soldier>& GridOSoldier)
-{
-    std::vector<Soldier*> outVSoldier;
-    for (auto& rSoldier : GridOSoldier)
-    {
-        if (rSoldier.isselected)
-        {
-            outVSoldier.push_back(&rSoldier);
-        }
-    }
-    
-    return outVSoldier;
-}
-
-void Deselection(Vector2 mousepoint, Rectangle& sBox, Soldier& SoldierOBJ, std::vector<Soldier> GridOSoldier) {
-    //Clear, Dont use for now until fixed
-   
-
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsKeyDown(KEY_LEFT_SHIFT))
-    {
-        if (SoldierOBJ.isselected)
-        {
-            if (!CheckCollisionPointRec(mousepoint, SoldierOBJ.hitbox))
+            if (CheckCollisionPointRec(mousepoint, GridOSoldier[i].hitbox))
             {
-
-                SoldierOBJ.isselected = false;
+                // & makes it a pointer
+                SoldierSelected.push_back(&GridOSoldier[i]);
             }
+        } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && CheckCollisionRecs(sBox, GridOSoldier[i].hitbox) && sBox.height > 10 && sBox.width > 10)
+        {
+                SoldierSelected.push_back(&GridOSoldier[i]);
         }
 
-    } 
+    
 
- 
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsKeyDown(KEY_LEFT_SHIFT))
+        {
+           if (std::find(SoldierSelected.begin(), SoldierSelected.end(), &GridOSoldier[i]) != SoldierSelected.end())
+            {
+                if (!CheckCollisionPointRec(mousepoint, GridOSoldier[i].hitbox))
+                {
+                    SoldierSelected.erase(std::remove(SoldierSelected.begin(), SoldierSelected.end(), &GridOSoldier[i]), SoldierSelected.end());
+                }
+            }
+
+        }
+   
+    
 }
+
+
 
 Rectangle DrawSelection(Vector2& a, Vector2& b, Rectangle& box, bool& initial, Camera2D P)
 {
@@ -89,7 +65,3 @@ Rectangle DrawSelection(Vector2& a, Vector2& b, Rectangle& box, bool& initial, C
     return box;
 }
 
-void updateRectPostoVect()
-{
-
-}

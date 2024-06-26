@@ -1,4 +1,4 @@
-#include "Pathfinding.h"
+#include "pathfinding.h"
 
 void GenerateCells(std::vector<UltraRect>& Grid)
 {

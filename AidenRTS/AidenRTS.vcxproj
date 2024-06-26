@@ -128,8 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AidenRTS.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Pathfinding.cpp" />
+    <ClCompile Include="audiohandler.cpp" />
+    <ClCompile Include="buildings.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="drawgui.cpp" />
+    <ClCompile Include="misc.cpp" />
+    <ClCompile Include="pathfinding.cpp" />
+    <ClCompile Include="orebehaviour.cpp" />
     <ClCompile Include="troops.cpp" />
     <ClCompile Include="troopselection.cpp" />
   </ItemGroup>
@@ -137,10 +142,15 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="audiohandler.h" />
+    <ClInclude Include="buildings.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="drawgui.h" />
+    <ClInclude Include="misc.h" />
+    <ClInclude Include="orebehaviour.h" />
     <ClInclude Include="troops.h" />
     <ClInclude Include="troopselection.h" />
-    <ClInclude Include="Pathfinding.h" />
+    <ClInclude Include="pathfinding.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include "raylib.h"
 #include <vector>
@@ -12,8 +10,6 @@
 
 
 
-void Selection(Vector2 mousepoint, Rectangle& sBox, Soldier& SoldierOBJ, std::vector<Soldier> GridOSoldier);
-void Deselection(Vector2 mousepoint, Rectangle& sBox, Soldier& SoldierOBJ,  std::vector<Soldier> GridOSoldier);
-void updateRectPostoVect();
-std::vector<Soldier*> CurrentlySelected(std::vector<Soldier>& GridOSoldier);
+
+void CurrentlySelected(std::vector<Soldier*>& SoldierSelected, std::vector<Soldier>& GridOSoldier, Vector2 mousepoint, Rectangle& sBox, int i);
 Rectangle DrawSelection(Vector2& a, Vector2& b, Rectangle& Box, bool& initial, Camera2D P);

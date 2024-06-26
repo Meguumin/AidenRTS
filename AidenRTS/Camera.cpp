@@ -1,14 +1,14 @@
-#include "Camera.h"
+#include "camera.h"
 
 
 
-void UpdateCamera(Camera2D& c, Vector2& p)
+void UpdateCamera(Camera2D& c, Vector2& p, float& cameraspeed)
 {
 
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) p.y -= 500 * GetFrameTime();
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) p.y += 500 * GetFrameTime();
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) p.x -= 500 * GetFrameTime();
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) p.x += 500 * GetFrameTime();
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) p.y -= cameraspeed * GetFrameTime();
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) p.y += cameraspeed * GetFrameTime();
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) p.x -= cameraspeed * GetFrameTime();
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) p.x += cameraspeed * GetFrameTime();
     c.target = p;
 }
 void UpdateZoom(Camera2D& c)
