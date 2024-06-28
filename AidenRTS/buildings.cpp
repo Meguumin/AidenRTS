@@ -37,9 +37,10 @@ void CreateNewRefinery( std::vector<Refinery>& Refineries, Vector2 GlobalMouse, 
 
     newTruck.parentrefinery = &newRefinery;
     newTruck.location = newRefinery.location;
+    newTruck.Dcolor = RED;
     UpdateTroopHitbox(newTruck.hitbox, newTruck.location);
     newRefinery.childtrucks.push_back(newTruck);
-
+   
     TotalBuildings.push_back(&newRefinery);
 
 }

@@ -11,5 +11,5 @@
 
 
 
-void CurrentlySelected(std::vector<Soldier*>& SoldierSelected, std::vector<Soldier>& GridOSoldier, Vector2 mousepoint, Rectangle& sBox, int i);
+void CurrentlySelected(std::vector<Troop*>& TroopSelected, std::vector<Troop*>& TotalTroops, Vector2 mousepoint, Rectangle& sBox, int i);
 Rectangle DrawSelection(Vector2& a, Vector2& b, Rectangle& Box, bool& initial, Camera2D P);

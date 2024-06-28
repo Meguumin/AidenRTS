@@ -42,3 +42,4 @@ Rectangle GetRectFromPointer(Building* B)
     Building y = *B;
     return y.hitbox;
 }
+

@@ -1,7 +1,8 @@
 #include "troops.h"
 #include "troopselection.h"
+#include "buildings.h"
 # define M_PI           3.14159265358979323846  
-Vector2 GetCenterOfGroup(Soldier SoldierOBJ, std::vector<Soldier> GridOSoldier)
+Vector2 GetCenterOfGroup(Troop TroopOBJ, std::vector<Soldier> GridOSoldier)
 {
     Vector2 total = { 0 };
     Vector2 center = { 0 };
@@ -30,56 +31,102 @@ Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size)
     return out;
 }
 
-void FollowMouse(typeofmovement movement, Soldier& SoldierOBJ,  std::vector<Soldier*>& SoldierSelected)
+void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected)
 {
-    
-    if (!SoldierOBJ.isactive || SoldierOBJ.isactive && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(SoldierSelected, SoldierOBJ))
-    {
-      
-        if (movement == square )
+   
+        //already done setup
+        if (!TroopOBJ.isactive || TroopOBJ.isactive && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected, TroopOBJ))
         {
-            //try to understand this code,  Get size not based on selected, stops moving when deselected, When selected individually it moves somewhere??
-           
-            float formationSize = std::ceil(std::sqrt(SoldierSelected.size()));
-            Vector2 leaderTarget = SoldierOBJ.target;
-            
-            
-            for (int i = 0; i < SoldierSelected.size(); ++i)
+            if (TroopOBJ.setupmovement == true)
             {
-               /*
-                float deltax = SoldierOBJ.target.x - SoldierSelected[i]->location.x;
-                float deltay = SoldierOBJ.target.y - SoldierSelected[i]->location.y;
-                float rad = atan2(deltax, deltay);
-                float deg = rad * (180 / M_PI);
-                SoldierSelected[i]->rotation = deg;
-               
-               */ 
-                SoldierSelected[i]->target = GetOffsetOfSquare(leaderTarget, formationSize, i);
-                SoldierSelected[i]->direction = Vector2Normalize(Vector2{  SoldierSelected[i]->target.x - SoldierSelected[i]->hitbox.x  ,  SoldierSelected[i]->target.y - SoldierSelected[i]->hitbox.y});
+                if (movement == square)
+                {
+                    //try to understand this code,  Get size not based on selected, stops moving when deselected, When selected individually it moves somewhere??
+
+                    float formationSize = std::ceil(std::sqrt(TroopSelected.size()));
+                    Vector2 leaderTarget = TroopOBJ.target;
+
+
+                    for (int i = 0; i < TroopSelected.size(); ++i)
+                    {
+                        /*
+                         float deltax = TroopOBJ.target.x - SoldierSelected[i]->location.x;
+                         float deltay = TroopOBJ.target.y - SoldierSelected[i]->location.y;
+                         float rad = atan2(deltax, deltay);
+                         float deg = rad * (180 / M_PI);
+                         SoldierSelected[i]->rotation = deg;
+
+                        */
+                        TroopSelected[i]->target = GetOffsetOfSquare(leaderTarget, formationSize, i);
+                        TroopSelected[i]->direction = Vector2Normalize(Vector2{ TroopSelected[i]->target.x - TroopSelected[i]->hitbox.x  ,  TroopSelected[i]->target.y - TroopSelected[i]->hitbox.y });
+                    }
+                }
             }
+            TroopOBJ.isactive = true;
         }
-        SoldierOBJ.isactive = true;
-    }
+    
 
-
-    if (Vector2Distance(SoldierOBJ.location, SoldierOBJ.target) < 0.01f)
+   
+    if (Vector2Distance(TroopOBJ.location, TroopOBJ.target) < 0.01f)
     {
-        SoldierOBJ.isactive = false;
+        TroopOBJ.isactive = false;
+        TroopOBJ.setupmovement = true;
     }
 
 
-  SoldierOBJ.location = Vector2MoveTowards(SoldierOBJ.location, SoldierOBJ.target, SoldierOBJ.movementspeed * GetFrameTime());
+  TroopOBJ.location = Vector2MoveTowards(TroopOBJ.location, TroopOBJ.target, TroopOBJ.movementspeed * GetFrameTime());
      
 }
 
 
-void SetupTroop(Troop* newTroop)
+void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Medic>& GridOMedic)
 {
-  //  newTroop->location = Barracks[0].location;
-  //  newTroop->location = Vector2MoveTowards(newTroop->location, Vector2{ 100,100 }, newTroop->movementspeed * GetFrameTime());
-  //  GridOSoldier.push_back(newTroop);
+    
+    switch (i) {
+    case 1:
+    {
+        //Soldier
+        Soldier newSoldier;
+        newSoldier.health = 20;
+        newSoldier.maxhealth = 100;
+        newSoldier.movementspeed = 150;
+        newSoldier.target = Vector2{ ABuilding->location.x + GetRandomValue(60, -60), ABuilding->location.y + GetRandomValue(0, -60) };
+        newSoldier.location = ABuilding->location;
+        newSoldier.hitbox = { ABuilding->location.x, ABuilding->location.y,15,15 };
+        newSoldier.Dcolor = WHITE;
+        GridOSoldier.push_back(newSoldier);
+        TotalTroops.push_back(&GridOSoldier.back());
+    }
+        break;
+    case 2:
+        Medic newMedic;
+        newMedic.health = 50;
+        newMedic.maxhealth = 50;
+        newMedic.movementspeed = 250;
+        newMedic.target = Vector2{ ABuilding->location.x + GetRandomValue(60, -60), ABuilding->location.y + GetRandomValue(0, -60) };
+        newMedic.location = ABuilding->location;
+        newMedic.hitbox = { ABuilding->location.x, ABuilding->location.y,10,10 };
+        newMedic.Dcolor = GREEN;
+        GridOMedic.push_back(newMedic);
+        TotalTroops.push_back(&GridOMedic.back());
+        break;
+    }
+     
+   
+       
 }
-
+void Troop::DrawHealth()
+{
+    DrawRectangleRec(Rectangle{hitbox.x,hitbox.y - 4,hitbox.width, 2}, RED);
+    DrawRectangleRec(Rectangle{ hitbox.x,hitbox.y - 4,CalculateHealthBoxWidth(), 2 }, GREEN);
+ 
+}
+float Troop::CalculateHealthBoxWidth()
+{
+   
+    float percent = health / maxhealth;
+    return Lerp(hitbox.width , hitbox.width * percent, 0.1);
+}
 void DrawCircleObj(Circle circle, Color color, int i)
 {
     if (i == 1)
@@ -94,9 +141,9 @@ void DrawCircleObj(Circle circle, Color color, int i)
 
 
 //Make inline functions in the future
-bool IsUnitSelected(std::vector<Soldier*>& SoldierSelected, Soldier& SoldierOBJ)
+bool IsUnitSelected(std::vector<Troop*> TroopSelected, Troop& TroopOBJ)
 {
-    if (std::find(SoldierSelected.begin(), SoldierSelected.end(), &SoldierOBJ) != SoldierSelected.end())
+    if (std::find(TroopSelected.begin(), TroopSelected.end(), &TroopOBJ) != TroopSelected.end())
     {
         return true;
     }
@@ -105,23 +152,27 @@ bool IsUnitSelected(std::vector<Soldier*>& SoldierSelected, Soldier& SoldierOBJ)
         return false;   
     }
 }
+Vector2 CalculateEnd(Troop* troop) {
+    float x = troop->location.x + troop->hitbox.width / 2 + troop->direction.x * 10;
+    float y = troop->location.y + troop->hitbox.height / 2 + troop->direction.y * 10;
+    return Vector2{ x, y };
+}
+bool ShouldFollowMouse(std::vector<Troop*> TroopSelected, Troop& TroopOBJ)
+{
+    return IsUnitSelected(TroopSelected, TroopOBJ) || !IsUnitSelected(TroopSelected, TroopOBJ) && TroopOBJ.isactive;
+}
+bool EnableTarget(Troop& TroopOBJ)
+{
+    return IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || TroopOBJ.isactive;
+}
+bool IsUnitStationary(std::vector<Troop*> TroopSelected, Troop& TroopOBJ)
+{
+    return IsUnitSelected(TroopSelected, TroopOBJ) && !TroopOBJ.isactive;
+}
 
-bool ShouldFollowMouse( std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ)
+bool UnitRepositionCheckWhileMoving(std::vector<Troop*> TroopSelected, Troop& TroopOBJ)
 {
-    return IsUnitSelected(SoldierSelected, SoldierOBJ) || !IsUnitSelected(SoldierSelected, SoldierOBJ) && SoldierOBJ.isactive;
-}
-bool EnableTarget(std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ)
-{
-    return IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || SoldierOBJ.isactive;
-}
-bool IsUnitStationary(std::vector<Soldier*> SoldierSelected, Soldier &SoldierOBJ)
-{
-    return IsUnitSelected(SoldierSelected, SoldierOBJ) && !SoldierOBJ.isactive;
-}
-
-bool UnitRepositionCheckWhileMoving(std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ)
-{
-    return IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && SoldierOBJ.isactive && IsUnitSelected(SoldierSelected, SoldierOBJ);
+    return IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && TroopOBJ.isactive && IsUnitSelected(TroopSelected, TroopOBJ);
 }
 
 

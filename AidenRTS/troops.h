@@ -19,14 +19,20 @@ public:
     float rotation = 0;
     Vector2 direction = { 0,0 };
     float health = 0;
-    float movementspeed = 200;// *getFrametime
-
- 
+    float maxhealth = 0;
+    bool setupmovement = false;
+    float movementspeed = 0;// *getFrametime
+    Rectangle hitbox = { 0, 0 ,0 , 0 };
+    void DrawHealth();
+    float CalculateHealthBoxWidth();
+    Color Dcolor;
 };
 
 class Soldier : public Troop {
 public:
-    Rectangle hitbox = { 0, 0 , 15 , 15 };
+};
+class Medic : public Troop {
+public:
 };
 
 class Truck : public Troop {
@@ -59,14 +65,15 @@ enum typeofmovement {
 
 
 
-Vector2 GetCenterOfGroup(Soldier SoldierOBJ, std::vector<Soldier> GridOSoldier);
+Vector2 GetCenterOfGroup(Troop TroopOBJ, std::vector<Soldier> GridOSoldier);
 Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size);
-
-void FollowMouse(typeofmovement movement, Soldier& SoldierOBJ, std::vector<Soldier*>& SoldierSelected);
+Vector2 CalculateEnd(Troop* troop);
+//Convert Functions from SoldierOBJ  to TroopOBJ
+void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected);
 void UpdateTroopHitbox(Rectangle& r, Vector2 m);
-void SetupTroop(Troop* newTroop);
-bool IsUnitSelected(std::vector<Soldier*>& SoldierSelected,Soldier& SoldierOBJ);
-bool ShouldFollowMouse(std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ);
-bool EnableTarget( std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ);
-bool IsUnitStationary( std::vector<Soldier*> SoldierSelected, Soldier &SoldierOBJ);
-bool UnitRepositionCheckWhileMoving( std::vector<Soldier*> SoldierSelected, Soldier& SoldierOBJ);
+void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Medic>& GridOMedic);
+bool IsUnitSelected(std::vector<Troop*> TroopSelected,  Troop& TroopOBJ);
+bool ShouldFollowMouse(std::vector<Troop*> TroopSelected, Troop& TroopOBJ);
+bool EnableTarget(Troop& TroopOBJ);
+bool IsUnitStationary(std::vector<Troop*> TroopSelected, Troop& TroopOBJ);
+bool UnitRepositionCheckWhileMoving(std::vector<Troop*> TroopSelected,Troop& TroopOBJ);

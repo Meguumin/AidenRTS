@@ -3,31 +3,31 @@
 
 
 // memory issue have to switch out vector for list
-void CurrentlySelected(std::vector<Soldier*>& SoldierSelected,std::vector<Soldier>& GridOSoldier, Vector2 mousepoint, Rectangle& sBox, int i)
+void CurrentlySelected(std::vector<Troop*>& TroopSelected, std::vector<Troop*>& TotalTroops, Vector2 mousepoint, Rectangle& sBox, int i)
 {
   
-
+  
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_SHIFT) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            if (CheckCollisionPointRec(mousepoint, GridOSoldier[i].hitbox))
+            if (CheckCollisionPointRec(mousepoint, TotalTroops[i]->hitbox))
             {
                 // & makes it a pointer
-                SoldierSelected.push_back(&GridOSoldier[i]);
+                TroopSelected.push_back(TotalTroops[i]);
             }
-        } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && CheckCollisionRecs(sBox, GridOSoldier[i].hitbox) && sBox.height > 10 && sBox.width > 10)
+        } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && CheckCollisionRecs(sBox, TotalTroops[i]->hitbox) && sBox.height > 10 && sBox.width > 10)
         {
-                SoldierSelected.push_back(&GridOSoldier[i]);
+            TroopSelected.push_back(TotalTroops[i]);
         }
 
     
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsKeyDown(KEY_LEFT_SHIFT))
         {
-           if (std::find(SoldierSelected.begin(), SoldierSelected.end(), &GridOSoldier[i]) != SoldierSelected.end())
+           if (std::find(TroopSelected.begin(), TroopSelected.end(), TotalTroops[i]) != TroopSelected.end())
             {
-                if (!CheckCollisionPointRec(mousepoint, GridOSoldier[i].hitbox))
+                if (!CheckCollisionPointRec(mousepoint, TotalTroops[i]->hitbox))
                 {
-                    SoldierSelected.erase(std::remove(SoldierSelected.begin(), SoldierSelected.end(), &GridOSoldier[i]), SoldierSelected.end());
+               TroopSelected.erase(std::remove(TroopSelected.begin(), TroopSelected.end(), TotalTroops[i]), TroopSelected.end());
                 }
             }
 

@@ -30,20 +30,25 @@
 
        
 
-        //std::vector<UltraRect> Grid;
+        std::vector<UltraRect> Grid;
         // 
         //total soldiers
         std::vector<Soldier> GridOSoldier;
-        std::vector<Soldier*>  SoldierSelected;
+        std::vector<Medic> GridOMedic;
+
+        std::vector<Troop*> TroopSelected;
+        std::vector<Troop*> TotalTroops;
 
         std::vector<Refinery> Refineries;
         std::vector<Barrack> Barracks;
         std::vector<Building*> TotalBuildings;
+
         std::vector<Ore> ListOres;
       //  Ore Tempore;
       // 
         //temp fix switch both to linked list
         GridOSoldier.reserve(1000);
+        GridOMedic.reserve(1000);
         //pointers get reset then 
         Refineries.reserve(1000);
         Barracks.reserve(1000);
@@ -58,16 +63,19 @@
         //selection box
        // Circle troopcollider;
         
-        Soldier newSoldier;
+        Troop newTroop;
         Building* selectedbuilding = NULL;
         int money = 10000000;
         int menu = 1;
+
         Rectangle SelectionStructurebutton = { 820, 240, 70, 20 };
         Rectangle SelectionTroopbutton = { 900, 240, 70, 20 };
         Rectangle Refinerybutton = { 820, 270, 50, 50 };
         Rectangle Barrackbutton = { 875, 270, 50, 50 };
+        Rectangle Medicbutton = { 820, 270, 50, 50 };
         Rectangle Soldierbutton = { 875, 270, 50, 50 };
-        std::vector<Rectangle*> Buttons =  { &Refinerybutton, &Barrackbutton, &Soldierbutton,&SelectionStructurebutton, &SelectionTroopbutton };
+
+        std::vector<Rectangle*> Buttons =  { &Refinerybutton, &Barrackbutton, &Soldierbutton,&SelectionStructurebutton, &Medicbutton ,&SelectionTroopbutton };
        //button layering issue?
         enum BPlacementStates
         {
@@ -78,53 +86,54 @@
  
         CommandCenter Top;
 
-        GridOSoldier.push_back(newSoldier);
         typeofmovement movement = square;
        
         Rectangle slider_rect = { 400, 940, 350, 40 };
        
         InitWindow(screenWidth, screenHeight, "RTS Testing");
-       
-        
-        //GenerateCells(Grid);
+        InitAudioDevice();
+       // Music Crab = LoadMusicStream("Crab.mp3");
+        GenerateCells(Grid);
         // play around with different ore times and make delay while in the truck optimization and add directions, make soldiers linked lists, evaulate, crashes when multiple trucks are on ore cause it gets removed
         //Going back to 0,0? adjust ore truck to new ore system with pointers
         // optimize previos code
         //add quality of life features, also add camera speed slider
         GenerateOre(ListOres, 10000);
-
+       // PlayMusicStream(Crab);
         while (!WindowShouldClose())
         {
     
           GlobalMouse = GetScreenToWorld2D(GetMousePosition(), Pcamera);
           UpdateCamera(Pcamera,CameraLocation,cameraspeed );
           UpdateZoom(Pcamera);
-          
+         // UpdateMusicStream(Crab);
+        
              
           if (IsKeyPressed(KEY_T))
           {
-              newSoldier.location = {float(GetRandomValue(0, 100)), float(GetRandomValue(0, 100)) };
-              GridOSoldier.push_back(newSoldier);
+             // newSoldier.location = {float(GetRandomValue(0, 100)), float(GetRandomValue(0, 100)) };
+              //newSoldier.hitbox = { 0,0,15,15 };
+              //GridOSoldier.push_back(newSoldier);
           }
          
-              for (int i = 0; i < GridOSoldier.size(); ++i)
+              for (int i = 0; i < TotalTroops.size(); ++i)
               {
                   // Check if right mouse button is pressed or the soldier is active  
-                  if (EnableTarget( SoldierSelected, GridOSoldier[i]))
+                  if (EnableTarget(*TotalTroops[i]) || TotalTroops[i]->setupmovement == false)
                   {
                       //isunit stationary not working and is unit selected
-                          if (IsUnitStationary( SoldierSelected, GridOSoldier[i]) || UnitRepositionCheckWhileMoving( SoldierSelected, GridOSoldier[i]))
+                          if (IsUnitStationary(TroopSelected, *TotalTroops[i]) || UnitRepositionCheckWhileMoving(TroopSelected, *TotalTroops[i]))
                           {
-                              GridOSoldier[i].target = GetScreenToWorld2D(GetMousePosition(), Pcamera);
+                              TotalTroops[i]->target = GetScreenToWorld2D(GetMousePosition(), Pcamera);
 
                           }
-                      if (ShouldFollowMouse( SoldierSelected, GridOSoldier[i]))
+                      if (ShouldFollowMouse(TroopSelected, *TotalTroops[i]) || TotalTroops[i]->setupmovement == false)
                       {
-                          FollowMouse(movement, GridOSoldier[i], SoldierSelected);
+                          FollowMouse(movement, *TotalTroops[i], TroopSelected);
                       }
                   }
-                  UpdateTroopHitbox(GridOSoldier[i].hitbox, GridOSoldier[i].location);
-                  CurrentlySelected(SoldierSelected, GridOSoldier, GlobalMouse, sBox, i);
+                  UpdateTroopHitbox(TotalTroops[i]->hitbox, TotalTroops[i]->location);
+                  CurrentlySelected(TroopSelected, TotalTroops, GlobalMouse, sBox, i);
                   //Selection( GlobalMouse,  sBox, GridOSoldier[i],GridOSoldier);
                   //Deselection(GlobalMouse, sBox, GridOSoldier[i], GridOSoldier);
               }
@@ -133,10 +142,12 @@
               {
                   Refineries[i].UpdateTrucks(Refineries[i].childtrucks,ListOres, money);   
               }
+
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
               {
                   ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons);
               }
+
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !Top.CommandCenterPlaced)
               {
                   Top = Top.CreateNewCommandCenter(GlobalMouse);
@@ -168,7 +179,11 @@
             
             ClearBackground(BLACK);
             BeginMode2D(Pcamera);
-
+            for (int i = 0; i < Grid.size(); ++i)
+            {
+                DrawRectangleRec(Grid[i].Box, Fade(GRAY, 0.2));
+            }
+            
             DrawRectangleRec(Bordertangle, GRAY);
 
      
@@ -196,10 +211,30 @@
               DrawRectanglePro(ListOres[i].Rectangle, Vector2{ListOres[i].Rectangle.width /2,ListOres[i].Rectangle.height / 2 }, ListOres[i].randomrotation, PURPLE);
               //DrawRectanglePro(ListOres[i].Rectangle, Vector2{ ListOres[i].OreLocation.x + ListOres[i].Rectangle.width / 2,ListOres[i].OreLocation.y + ListOres[i].Rectangle.height / 2 }, ListOres[i].randomrotation, PURPLE);
             }
+
             for (int i = 0; i < Barracks.size(); ++i)
             {
                 DrawRectangleRec(Barracks[i].hitbox, BLUE);
             }
+            for (int i = 0; i < TotalTroops.size(); ++i)
+            {
+
+                DrawRectangleRec(TotalTroops[i]->hitbox, TotalTroops[i]->Dcolor);
+                DrawLineEx(GetCenterPositionOfRectangle(TotalTroops[i]->location, TotalTroops[i]->hitbox), CalculateEnd(TotalTroops[i]), 1, BLACK);
+                //draw lines to indicate pov
+               // DrawRectanglePro(GridOSoldier[i].hitbox, Vector2{GridOSoldier[i].hitbox.width /2 ,GridOSoldier[i].hitbox.height/2 }, GridOSoldier[i].rotation, WHITE);
+                if (IsUnitSelected(TroopSelected,  *TotalTroops[i]))
+                {
+                    TotalTroops[i]->DrawHealth();
+                 }
+              
+                if (std::find(TroopSelected.begin(), TroopSelected.end(), TotalTroops[i]) != TroopSelected.end())
+                {
+                    DrawRectangleLinesEx(TotalTroops[i]->hitbox, 1, GOLD);
+                }
+            }
+
+
             for (int i = 0; i < Refineries.size(); ++i)
             {
                 DrawRectangleRec(Refineries[i].hitbox, ORANGE);
@@ -212,7 +247,7 @@
                 for (int j = 0; j < Refineries[i].childtrucks.size(); ++j)
                 {
                   
-                   DrawRectangleRec(Refineries[i].childtrucks[j].hitbox, RED);
+                   DrawRectangleRec(Refineries[i].childtrucks[j].hitbox, Refineries[i].childtrucks[j].Dcolor);
                    DrawLineEx(GetCenterPositionOfRectangle(Refineries[i].childtrucks[j].location, Refineries[i].childtrucks[j].hitbox), Vector2{ Refineries[i].childtrucks[j].location.x + Refineries[i].childtrucks[j].hitbox.width / 2 + Refineries[i].childtrucks[j].direction.x * 10, Refineries[i].childtrucks[j].location.y + Refineries[i].childtrucks[j].hitbox.height / 2 + Refineries[i].childtrucks[j].direction.y* 10 }, 1, BLACK);
                 }
             }
@@ -220,24 +255,9 @@
       
             if (selectedbuilding != NULL)
             {
-                DrawRectangleLinesEx(GetRectFromPointer(selectedbuilding), 3, GOLD);
+                DrawRectangleLinesEx(GetRectFromPointer(selectedbuilding), 2, GOLD);
             }
 
-            for (int i = 0; i < GridOSoldier.size(); ++i)
-            {
-                DrawRectangleRec(GridOSoldier[i].hitbox, WHITE);
-                DrawLineEx(GetCenterPositionOfRectangle(GridOSoldier[i].location, GridOSoldier[i].hitbox), Vector2{ GridOSoldier[i].location.x + GridOSoldier[i].hitbox.width / 2 + GridOSoldier[i].direction.x * 10, GridOSoldier[i].location.y + GridOSoldier[i].hitbox.height / 2 + GridOSoldier[i].direction.y * 10 }, 1, BLACK);
-                //draw lines to indicate pov
-               // DrawRectanglePro(GridOSoldier[i].hitbox, Vector2{GridOSoldier[i].hitbox.width /2 ,GridOSoldier[i].hitbox.height/2 }, GridOSoldier[i].rotation, WHITE);
-
-                if (std::find(SoldierSelected.begin(), SoldierSelected.end(), &GridOSoldier[i]) != SoldierSelected.end())
-                {
-                    DrawRectangleLinesEx(GridOSoldier[i].hitbox, 2, GOLD);
-                }
-            }
-
-
-          // 
             DrawRectangleLinesEx(DrawSelection(selectionstart, selectionend, sBox, initial, Pcamera), 5, WHITE);
             EndMode2D();
 
@@ -287,8 +307,17 @@
                     {
                         if (Barracks.size() > 0)
                         {
-                            
-                           
+                            money -= 100;
+                              SetupTroop(1, &Barracks[0], GridOSoldier,TotalTroops, GridOMedic);
+                        }
+                    }
+
+                    if (GuiButton(Medicbutton, "Medic"))
+                    {
+                        if (Barracks.size() > 0)
+                        {
+                            money -= 100;
+                            SetupTroop(2, &Barracks[0], GridOSoldier, TotalTroops, GridOMedic);
                         }
                     }
                     break;
@@ -306,6 +335,9 @@
             
             EndDrawing();
         }
+        //for loop over to unit
+        //UnloadMusicStream(Crab);   // Unload music stream buffers from RAM
+       // CloseAudioDevice();
         CloseWindow();
         return 0;
     }
