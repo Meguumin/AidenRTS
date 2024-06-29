@@ -12,11 +12,11 @@
 #include "misc.h"
 #include "drawgui.h"
 #include "audiohandler.h"
+#include <queue>
 #include <vector>
 #include <stdio.h>
 #include <string>
-
-#include <map>
+#include <unordered_map>
 //look into std::map
 
     int main(void)
@@ -27,10 +27,34 @@
         Vector2 GlobalMouse = { 0,0 };
         Camera2D Pcamera = { {500, 500}, {0, 0}, 0.0f, 2.0f };
         Rectangle Bordertangle = { 0, 0, 1000, 1000 };
+        int row = 1000;
+        int col = 1000;
 
        
 
-        std::vector<UltraRect> Grid;
+        std::vector<std::vector<UltraRect>> Grid;
+        std::priority_queue<UltraRect*> UR_priority;
+       // std::unordered_map<UltraRect*, UltraRect*> came_from;
+       // std::unordered_map<UltraRect*, double> cost_so_far;
+       
+        GenerateCells(Grid, UR_priority, col, row);
+        UltraRect* start = &Grid[0][0];
+        UltraRect* end = &Grid[row  - 1][col - 1];
+        
+            // Not sure if proper placement
+            start->state = 2;
+            start->VisColor = GREEN;
+            // 2 = start
+            // 3 = end
+            UR_priority.push(start);
+       
+            end->state = 3;
+            end->VisColor = RED;
+           //could add weights later on
+
+            CalcH(Grid, end, col, row);
+
+
         // 
         //total soldiers
         std::vector<Soldier> GridOSoldier;
@@ -48,10 +72,14 @@
       // 
         //temp fix switch both to linked list
         GridOSoldier.reserve(1000);
+        Grid.reserve(100000);
         GridOMedic.reserve(1000);
-        //pointers get reset then 
         Refineries.reserve(1000);
         Barracks.reserve(1000);
+
+
+
+
         bool initial = false;   
         Pcamera.zoom = 1.0f;
         Vector2 CameraLocation = { 0, 0 };
@@ -93,11 +121,8 @@
         InitWindow(screenWidth, screenHeight, "RTS Testing");
         InitAudioDevice();
        // Music Crab = LoadMusicStream("Crab.mp3");
-        GenerateCells(Grid);
-        // play around with different ore times and make delay while in the truck optimization and add directions, make soldiers linked lists, evaulate, crashes when multiple trucks are on ore cause it gets removed
-        //Going back to 0,0? adjust ore truck to new ore system with pointers
-        // optimize previos code
-        //add quality of life features, also add camera speed slider
+       //Pathfinding and optimization after
+       
         GenerateOre(ListOres, 10000);
        // PlayMusicStream(Crab);
         while (!WindowShouldClose())
@@ -107,7 +132,22 @@
           UpdateCamera(Pcamera,CameraLocation,cameraspeed );
           UpdateZoom(Pcamera);
          // UpdateMusicStream(Crab);
-        
+          
+
+
+         /* while (!UR_priority.empty())
+          {
+            
+            
+            UltraRect* current = UR_priority.top();
+              if (current == end)
+              {
+                  break;
+              }
+              
+
+          }*/
+          
              
           if (IsKeyPressed(KEY_T))
           {
@@ -179,12 +219,17 @@
             
             ClearBackground(BLACK);
             BeginMode2D(Pcamera);
-            for (int i = 0; i < Grid.size(); ++i)
+
+            for (int i = 0; i < row; ++i)
             {
-                DrawRectangleRec(Grid[i].Box, Fade(GRAY, 0.2));
+                for (int t = 0; t < col; ++t)
+                {
+                //    DrawRectangleRec(Grid[i][t].Box, Grid[i][t].VisColor);
+                }
+              
             }
             
-            DrawRectangleRec(Bordertangle, GRAY);
+            //DrawRectangleRec(Bordertangle, GRAY);
 
      
 

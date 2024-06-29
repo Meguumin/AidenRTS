@@ -65,7 +65,7 @@ void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& 
             TroopOBJ.isactive = true;
         }
     
-
+        
    
     if (Vector2Distance(TroopOBJ.location, TroopOBJ.target) < 0.01f)
     {
