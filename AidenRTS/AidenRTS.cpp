@@ -12,12 +12,18 @@
 #include "misc.h"
 #include "drawgui.h"
 #include "audiohandler.h"
+#include "opponentbehaviour.h"
 #include <queue>
 #include <vector>
 #include <stdio.h>
 #include <string>
 #include <unordered_map>
+#include <algorithm> // std::min_element
+#include <iterator> 
+
 //look into std::map
+
+
 
     int main(void)
     {
@@ -27,57 +33,54 @@
         Vector2 GlobalMouse = { 0,0 };
         Camera2D Pcamera = { {500, 500}, {0, 0}, 0.0f, 2.0f };
         Rectangle Bordertangle = { 0, 0, 1000, 1000 };
-        int row = 1000;
-        int col = 1000;
-
-       
-
-        std::vector<std::vector<UltraRect>> Grid;
-        std::priority_queue<UltraRect*> UR_priority;
-       // std::unordered_map<UltraRect*, UltraRect*> came_from;
-       // std::unordered_map<UltraRect*, double> cost_so_far;
-       
-        GenerateCells(Grid, UR_priority, col, row);
-        UltraRect* start = &Grid[0][0];
-        UltraRect* end = &Grid[row  - 1][col - 1];
-        
-            // Not sure if proper placement
-            start->state = 2;
-            start->VisColor = GREEN;
-            // 2 = start
-            // 3 = end
-            UR_priority.push(start);
-       
-            end->state = 3;
-            end->VisColor = RED;
-           //could add weights later on
-
-            CalcH(Grid, end, col, row);
-
+    
+           
 
         // 
         //total soldiers
+        std::vector<std::vector<Node>> Nodelist;
+
         std::vector<Soldier> GridOSoldier;
         std::vector<Medic> GridOMedic;
 
+
+
+
+
+        
+        //std::vector<Medic> GridOMedic;
+
+        std::vector<Rectangle> GameMap;
+        GameMap.push_back(Rectangle{ 1000, 1000, 1000, 5000 });
+        GameMap.push_back(Rectangle{ 1500, 200, 200, 100 });
+
+        
+
         std::vector<Troop*> TroopSelected;
         std::vector<Troop*> TotalTroops;
-
         std::vector<Refinery> Refineries;
         std::vector<Barrack> Barracks;
         std::vector<Building*> TotalBuildings;
-
+        std::vector<Rectangle*> RectangleBuildings;
         std::vector<Ore> ListOres;
+
       //  Ore Tempore;
       // 
         //temp fix switch both to linked list
         GridOSoldier.reserve(1000);
-        Grid.reserve(100000);
+        Nodelist.reserve(1000000);
         GridOMedic.reserve(1000);
         Refineries.reserve(1000);
         Barracks.reserve(1000);
 
+        Opponent YourNightmare;
 
+        enum BPlacementStates
+        {
+            NOTHINGSELECTED = 0,
+            PLACEREFINERY = 1,
+            PLACEBARRACKS = 2,
+        }PlacementS = NOTHINGSELECTED;
 
 
         bool initial = false;   
@@ -105,79 +108,127 @@
 
         std::vector<Rectangle*> Buttons =  { &Refinerybutton, &Barrackbutton, &Soldierbutton,&SelectionStructurebutton, &Medicbutton ,&SelectionTroopbutton };
        //button layering issue?
-        enum BPlacementStates
-        {
-            NOTHINGSELECTED= 0,
-            PLACEREFINERY,
-            PLACEBARRACKS,
-        }PlacementS = NOTHINGSELECTED;
- 
-        CommandCenter Top;
 
+
+       
+       
+
+
+        int row = 1000;
+        int col = 1000;
+      
+        CommandCenter Top;
         typeofmovement movement = square;
        
         Rectangle slider_rect = { 400, 940, 350, 40 };
        
         InitWindow(screenWidth, screenHeight, "RTS Testing");
         InitAudioDevice();
-       // Music Crab = LoadMusicStream("Crab.mp3");
+        Texture2D PowerPlanttexture = LoadTexture("resources/Powerplant.png");
+        Texture2D Barracktexture = LoadTexture("resources/Barrack.png");
+        Texture2D Barrackopptexture = LoadTexture("resources/BarrackOpp.png");
+        Texture2D Commandtexture = LoadTexture("resources/CommandCenter.png");
+        Texture2D Commandopptexture = LoadTexture("resources/CommandCenterOpp.png");
        //Pathfinding and optimization after
+        GenerateOre(ListOres, 5000, GameMap);
+        GenerateCells(Nodelist,GameMap ,ListOres ,1000, 1000);
        
-        GenerateOre(ListOres, 10000);
-       // PlayMusicStream(Crab);
+        
+        
+        YourNightmare.initializeopp(&Commandopptexture);
+        YourNightmare.CreateOppBarracks(&Barrackopptexture, TotalBuildings);
+        TotalBuildings.push_back(&YourNightmare.base);
+        TotalBuildings.push_back(&Top);
+
+
+        Music Devotion = LoadMusicStream("resources/Devotion.wav");
+        PlayMusicStream(Devotion);
+
+
+        for (int i = 0; i < TotalBuildings.size(); ++i)
+        {
+            std::pair<short, short> index = GetGridIndex(Vector2{ TotalBuildings[i]->location.x, TotalBuildings[i]->location.y });
+            for (int t = 0; t < ceil(TotalBuildings[i]->hitbox.width / 11); ++t)
+            {
+                for (int y = 0; y < ceil(TotalBuildings[i]->hitbox.height / 11); ++y)
+                {
+                    Nodelist[index.second + y][index.first + t].state = 1;
+                }
+            }
+        }
+
+
         while (!WindowShouldClose())
         {
-    
+          
           GlobalMouse = GetScreenToWorld2D(GetMousePosition(), Pcamera);
           UpdateCamera(Pcamera,CameraLocation,cameraspeed );
           UpdateZoom(Pcamera);
-         // UpdateMusicStream(Crab);
-          
+          UpdateMusicStream(Devotion);
 
+          int u = floor((GlobalMouse.x) / 11);
+          int y = floor((GlobalMouse.y) / 11);
 
-         /* while (!UR_priority.empty())
+          if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
           {
-            
-            
-            UltraRect* current = UR_priority.top();
-              if (current == end)
+              if (CollisionWithGameObjects(GameMap, GlobalMouse))
               {
-                  break;
-              }
-              
-
-          }*/
-          
-             
-          if (IsKeyPressed(KEY_T))
-          {
-             // newSoldier.location = {float(GetRandomValue(0, 100)), float(GetRandomValue(0, 100)) };
-              //newSoldier.hitbox = { 0,0,15,15 };
-              //GridOSoldier.push_back(newSoldier);
-          }
-         
-              for (int i = 0; i < TotalTroops.size(); ++i)
-              {
-                  // Check if right mouse button is pressed or the soldier is active  
-                  if (EnableTarget(*TotalTroops[i]) || TotalTroops[i]->setupmovement == false)
+                  for (int i = 0; i < TroopSelected.size(); ++i)
                   {
-                      //isunit stationary not working and is unit selected
-                          if (IsUnitStationary(TroopSelected, *TotalTroops[i]) || UnitRepositionCheckWhileMoving(TroopSelected, *TotalTroops[i]))
-                          {
-                              TotalTroops[i]->target = GetScreenToWorld2D(GetMousePosition(), Pcamera);
-
-                          }
-                      if (ShouldFollowMouse(TroopSelected, *TotalTroops[i]) || TotalTroops[i]->setupmovement == false)
-                      {
-                          FollowMouse(movement, *TotalTroops[i], TroopSelected);
-                      }
+                      TroopSelected[i]->formationposition = i;
+                      TroopSelected[i]->groupsize = TroopSelected.size();
                   }
+
+              }
+          }
+
+
+
+              for (int i = 0; i < TotalTroops.size(); ++i)
+              { 
+                 //TotalTroops[i]->ExitAnimation();
+
+                  if (TotalTroops[i]->isactive)
+                  {
+                      TotalTroops[i]->NormalizeDir();
+                  }
+                 
+                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]))
+                  {
+
+                      TotalTroops[i]->ResetAttack();
+
+                      if (CollisionWithGameObjects(GameMap, GlobalMouse))
+                      {
+                        if (CollisionWithOpponentBuildings(YourNightmare.OppTotalBuildings, GlobalMouse, TotalTroops[i]))
+                          {
+                              TotalTroops[i]->FindAttackPath(GlobalMouse, Nodelist, TotalTroops[i]->buildingattacktarget);
+                          }
+                          else 
+                          {
+                              TotalTroops[i]->TroopPathINIT(GlobalMouse, Nodelist);
+                          }
+                       }                        
+                   }
+
+               
+                  if(TotalTroops[i]->isactive && TotalTroops[i]->path.size() > 0)
+                  {
+                     FollowMouse(movement, *TotalTroops[i], TroopSelected);
+                  }
+
+                  if (TotalTroops[i]->isattacking)
+                  {
+                      TotalTroops[i]->Attack();
+                  }
+                 
                   UpdateTroopHitbox(TotalTroops[i]->hitbox, TotalTroops[i]->location);
                   CurrentlySelected(TroopSelected, TotalTroops, GlobalMouse, sBox, i);
-                  //Selection( GlobalMouse,  sBox, GridOSoldier[i],GridOSoldier);
-                  //Deselection(GlobalMouse, sBox, GridOSoldier[i], GridOSoldier);
               }
-             
+
+          
+
+
               for (int i = 0; i < Refineries.size(); ++i)
               {
                   Refineries[i].UpdateTrucks(Refineries[i].childtrucks,ListOres, money);   
@@ -185,18 +236,24 @@
 
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
               {
-                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons);
+                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture);
+                 
+                 
               }
+
+            
 
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !Top.CommandCenterPlaced)
               {
-                  Top = Top.CreateNewCommandCenter(GlobalMouse);
+                  Top.initializeCC(GlobalMouse, &Commandtexture);
+                 
               }
 
               for (int i = 0; i < ListOres.size(); ++i)
               {
                   ListOres[i].randomrotation += 0.01f ;
               }
+
               if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && PlacementS != 0)
               {
                   PlacementS = NOTHINGSELECTED;
@@ -219,27 +276,42 @@
             
             ClearBackground(BLACK);
             BeginMode2D(Pcamera);
-
-            for (int i = 0; i < row; ++i)
-            {
-                for (int t = 0; t < col; ++t)
-                {
-                //    DrawRectangleRec(Grid[i][t].Box, Grid[i][t].VisColor);
-                }
-              
-            }
-            
             //DrawRectangleRec(Bordertangle, GRAY);
+            //DrawSmaller
+           
+            
+              for (auto rect : GameMap)
+                {
+                DrawRectangleRec(rect, GRAY);
+                }
+             /*
+              for (int i = 0; i <Nodelist.size(); ++i)
+              {
+                  for (int t = 0; t < Nodelist[i].size(); ++t)
+                  {
+                      if (Nodelist[i][t].state == 0)
+                      {
+                          DrawRectangle(Nodelist[i][t].xpos, Nodelist[i][t].ypos, 10, 10, GRAY);
+                      }
+                      if (Nodelist[i][t].state == 1)
+                      {
+                          DrawRectangle(Nodelist[i][t].xpos, Nodelist[i][t].ypos, 10, 10, GREEN);
+                      }
 
-     
 
-            //DrawCircleV(Vector2{Center.x, Center.y}, 5, BLUE);
-            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-            {
-                DrawCircleV(GlobalMouse, 10, Fade(YELLOW, 0.5));
-            }
-           // Drawcircleobj(troopcollider, WHITE);
-            Drawbuildinghighlights(PlacementS,GlobalMouse,Top.range);
+                  }
+
+              }
+             
+             */
+            
+             
+             
+
+       
+
+            DrawSelectionCirlce(GlobalMouse);
+            Drawbuildinghighlights(PlacementS ,GlobalMouse,Top.range);
            
             if (!Top.CommandCenterPlaced)
             {
@@ -247,8 +319,9 @@
             }
             else
             {
-                Top.DrawCommandCenter(Top);
+                Top.DrawCommandCenter();
             }
+           YourNightmare.base.DrawCommandCenter();
 
             for (int i = 0; i < ListOres.size(); ++i)
             { 
@@ -258,27 +331,55 @@
             }
 
             for (int i = 0; i < Barracks.size(); ++i)
-            {
-                DrawRectangleRec(Barracks[i].hitbox, BLUE);
+            {               
+                Barracks[i].DrawBTexture();
             }
+
+            for (int i = 0; i < YourNightmare.OppBarracks.size(); ++i)
+            {
+                YourNightmare.OppBarracks[i].DrawBTexture();
+            }
+            for (auto i : TotalBuildings)
+            {
+                i->CalculateHealthBoxWidth();
+                i->DrawHealth();
+     
+            }
+
             for (int i = 0; i < TotalTroops.size(); ++i)
             {
 
                 DrawRectangleRec(TotalTroops[i]->hitbox, TotalTroops[i]->Dcolor);
-                DrawLineEx(GetCenterPositionOfRectangle(TotalTroops[i]->location, TotalTroops[i]->hitbox), CalculateEnd(TotalTroops[i]), 1, BLACK);
-                //draw lines to indicate pov
-               // DrawRectanglePro(GridOSoldier[i].hitbox, Vector2{GridOSoldier[i].hitbox.width /2 ,GridOSoldier[i].hitbox.height/2 }, GridOSoldier[i].rotation, WHITE);
+               
+                if (!TotalTroops[i]->startattackanimation)
+                {
+                    StartTimer(&TotalTroops[i]->attackcircle, 0.2);
+                    TotalTroops[i]->startattackanimation = true;
+                }
+                DrawCircle(TotalTroops[i]->location.x, TotalTroops[i]->location.y, TotalTroops[i]->acr, Fade(YELLOW, 0.5));
                 if (IsUnitSelected(TroopSelected,  *TotalTroops[i]))
                 {
                     TotalTroops[i]->DrawHealth();
-                 }
+                }
               
                 if (std::find(TroopSelected.begin(), TroopSelected.end(), TotalTroops[i]) != TroopSelected.end())
                 {
                     DrawRectangleLinesEx(TotalTroops[i]->hitbox, 1, GOLD);
                 }
+
+
+
+                DrawLineEx(GetCenterPositionOfRectangle(TotalTroops[i]->location, TotalTroops[i]->hitbox), CalculateEnd(TotalTroops[i]), 1, BLACK);
             }
 
+            if (TroopSelected.size() > 0)
+            {
+                for (int i = 0; i < TroopSelected.size(); ++i)
+                {
+                    TroopSelected[i]->DrawLine();
+                }
+
+            }
 
             for (int i = 0; i < Refineries.size(); ++i)
             {
@@ -304,27 +405,37 @@
             }
 
             DrawRectangleLinesEx(DrawSelection(selectionstart, selectionend, sBox, initial, Pcamera), 5, WHITE);
+            DrawRectangleLinesEx(Rectangle{ -10,-10, 11000,11000 }, 10, WHITE);
+            DrawRectangleLinesEx(Rectangle{0,0, 11000,11000 }, 1, WHITE);
+
             EndMode2D();
 
 
          //Gui
-           // DrawText(TextFormat("Cspeed: %i", cameraspeed), 0, 0, 40, WHITE);
+          // DrawText(TextFormat(" %i", u), 0, 0, 40, WHITE);
+           //DrawText(TextFormat(" %i", y), 60, 0, 40, WHITE);
+      
+          
             drawmoneytop(money);
             if (Top.CommandCenterPlaced)
             {
+               
                 DrawRectangle(810, 10, 380, 480, Fade(GRAY, 0.85f));
                 DrawRectangleLines(810, 10, 380, 480, BLACK);
-                if (GuiButton(SelectionStructurebutton, "Structure"))
+
+                if (GuiButton(*Buttons[3], "Structure"))
                 {
                     menu = 1;
                 }
-                if (GuiButton(SelectionTroopbutton, "Troops"))
+
+                if (GuiButton(*Buttons[5], "Troops"))
                 {
                     menu = 2;
                 }
+
                 switch (menu) {
                 case 1:
-                    if (GuiButton(Refinerybutton, "Refinery"))
+                    if (GuiButton(*Buttons[0], "Refinery"))
                     {
                         if (PlacementS == 0 || PlacementS == 2)//idle
                         {
@@ -335,7 +446,7 @@
                             PlacementS = NOTHINGSELECTED;
                         }
                     }
-                    if (GuiButton(Barrackbutton, "Barracks"))
+                    if (GuiButton(*Buttons[1], "Barracks"))
                     {
                         if (PlacementS == 0 || PlacementS == 1)//idle
                         {
@@ -348,16 +459,17 @@
                     }
                     break;
                 case 2:
-                    if (GuiButton(Soldierbutton, "Infantry"))
+                    if (GuiButton(*Buttons[2], "Infantry"))
                     {
                         if (Barracks.size() > 0)
                         {
                             money -= 100;
-                              SetupTroop(1, &Barracks[0], GridOSoldier,TotalTroops, GridOMedic);
+                            SetupTroop(1, &Barracks[0], GridOSoldier, TotalTroops, GridOMedic);
+
                         }
                     }
 
-                    if (GuiButton(Medicbutton, "Medic"))
+                    if (GuiButton(*Buttons[4], "Medic"))
                     {
                         if (Barracks.size() > 0)
                         {
@@ -367,8 +479,8 @@
                     }
                     break;
                 }
-                
                
+
                 if (selectedbuilding != NULL)
                 {
                    // selectedbuilding->DrawGUI();
@@ -381,9 +493,17 @@
             EndDrawing();
         }
         //for loop over to unit
-        //UnloadMusicStream(Crab);   // Unload music stream buffers from RAM
-       // CloseAudioDevice();
+        UnloadMusicStream(Devotion);  
+        UnloadTexture(Barracktexture);
+        UnloadTexture(Barrackopptexture);
+        UnloadTexture(Commandopptexture);
+        UnloadTexture(Commandtexture);
+        UnloadTexture(PowerPlanttexture);
+        CloseAudioDevice();
         CloseWindow();
         return 0;
     }
+    
+    
+    
     

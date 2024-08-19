@@ -27,57 +27,244 @@ Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size)
     int col = size % int(formationSize);
     float offsetX = (col - formationSize / 2) * 20.0f; // Adjust the spacing as needed
     float offsetY = (row - formationSize / 2) * 20.0f; // Adjust the spacing as needed
-    out = { leaderTarget.x + offsetX, leaderTarget.y + offsetY };
+    out = { leaderTarget.x + offsetX, leaderTarget.y};
+    
     return out;
 }
 
-void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected)
+
+
+void Troop::NormalizeDir()
 {
-   
-        //already done setup
-        if (!TroopOBJ.isactive || TroopOBJ.isactive && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected, TroopOBJ))
-        {
-            if (TroopOBJ.setupmovement == true)
-            {
-                if (movement == square)
-                {
-                    //try to understand this code,  Get size not based on selected, stops moving when deselected, When selected individually it moves somewhere??
-
-                    float formationSize = std::ceil(std::sqrt(TroopSelected.size()));
-                    Vector2 leaderTarget = TroopOBJ.target;
-
-
-                    for (int i = 0; i < TroopSelected.size(); ++i)
-                    {
-                        /*
-                         float deltax = TroopOBJ.target.x - SoldierSelected[i]->location.x;
-                         float deltay = TroopOBJ.target.y - SoldierSelected[i]->location.y;
-                         float rad = atan2(deltax, deltay);
-                         float deg = rad * (180 / M_PI);
-                         SoldierSelected[i]->rotation = deg;
-
-                        */
-                        TroopSelected[i]->target = GetOffsetOfSquare(leaderTarget, formationSize, i);
-                        TroopSelected[i]->direction = Vector2Normalize(Vector2{ TroopSelected[i]->target.x - TroopSelected[i]->hitbox.x  ,  TroopSelected[i]->target.y - TroopSelected[i]->hitbox.y });
-                    }
-                }
-            }
-            TroopOBJ.isactive = true;
-        }
-    
-        
-   
-    if (Vector2Distance(TroopOBJ.location, TroopOBJ.target) < 0.01f)
-    {
-        TroopOBJ.isactive = false;
-        TroopOBJ.setupmovement = true;
-    }
-
-
-  TroopOBJ.location = Vector2MoveTowards(TroopOBJ.location, TroopOBJ.target, TroopOBJ.movementspeed * GetFrameTime());
-     
+    direction = Vector2Normalize(Vector2{ target.x - hitbox.x  , target.y - hitbox.y });
 }
 
+void Troop::DrawLine()
+{
+    for (int t = 0; t <path.size(); ++t)
+    {
+        if (t + 1 < path.size())
+        {
+            DrawLineV(Vector2{ float(path[t]->xpos),float(path[t]->ypos) }, Vector2{ float(path[t + 1]->xpos),float(path[t + 1]->ypos) }, YELLOW);
+        }
+
+    }
+}
+
+void Troop::ResetAttack()
+{
+   isattacking = false;
+   startattackanimation = false;
+   attackmode = false;
+   acr = 0;
+   buildingattacktarget = NULL;
+}
+void Troop::ExitAnimation()
+{
+    if (!setupmovement)
+    {
+      location = Vector2MoveTowards(location, target,movementspeed * GetFrameTime());
+        if (Vector2Distance(location, target) < 0.01f)
+        {
+            setupmovement = true;
+        }
+
+    }
+}
+
+
+
+void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected)
+{
+         if (movement == square)
+        {
+                //try to understand this code,  Get size not based on selected, stops moving when deselected, When selected individually it moves somewhere??
+
+                Vector2 leaderTarget = Vector2{ float(TroopOBJ.path[TroopOBJ.indy]->xpos) , float(TroopOBJ.path[TroopOBJ.indy]->ypos) };
+
+                float result = Vector2Distance(TroopOBJ.location, TroopOBJ.target);
+                if (result < 0.01f)
+                {
+                  
+                    TroopOBJ.indy++;
+                }
+
+               // 
+                if (std::find(TroopSelected.begin(), TroopSelected.end(), &TroopOBJ) != TroopSelected.end())
+                {
+                    TroopOBJ.maintain = true;
+                }
+                
+                  if (TroopSelected.size() >= 2 && std::find(TroopSelected.begin(), TroopSelected.end(), &TroopOBJ) != TroopSelected.end() || TroopOBJ.maintain)
+                    {
+                   
+                      TroopOBJ.target = GetOffsetOfSquare(leaderTarget,TroopOBJ.groupsize, TroopOBJ.formationposition);
+     
+                    }
+                
+              
+                else 
+                {
+                    TroopOBJ.target = leaderTarget;
+                }
+                  
+                  
+                
+                if (TroopOBJ.endnode == TroopOBJ.path[TroopOBJ.indy])
+                {
+                    TroopOBJ.isactive = false;
+                    if(TroopOBJ.attackmode)
+                    {
+                        TroopOBJ.isattacking = true;
+                    }
+                    TroopOBJ.indy = 0;
+                    TroopOBJ.path.clear();
+                    TroopOBJ.setupmovement = true;
+                    TroopOBJ.maintain = false;
+                  
+                    TroopOBJ.formationposition = NULL;
+                }
+            
+                
+
+   
+    }
+
+    TroopOBJ.location = Vector2MoveTowards(TroopOBJ.location, TroopOBJ.target, TroopOBJ.movementspeed * GetFrameTime());
+
+}
+
+bool CompareNode(const Node* p1, const Node* p2)
+{
+    return p1->values[0] < p2->values[0];
+}
+
+void Troop::Attack()
+{
+    
+    if (TimerDone(attackcircle))
+    {
+        if (acr > 5)
+        {
+            acr = 0;
+            buildingattacktarget->buildinghealth -= attackdmg;
+        }
+        acr += 0.1;
+        
+        StartTimer(&attackcircle, 0.03);
+    }
+    if (buildingattacktarget->buildinghealth < 0)
+    {
+        isattacking = false;
+    }
+}
+
+void Troop::FindPath(std::vector<std::vector<Node>>& Nodelist)
+{  
+    path.clear();
+       
+    
+  
+
+    while (!Queue.empty())
+   {
+            Node* current = Queue[0];  
+            std::vector<Node*> ADJ = GetAdjCells(Nodelist, current, 1000, 1000);
+            CalcGandF(current, ADJ);
+            Queue.erase(Queue.begin());
+            for (auto obj : ADJ)
+            {
+                obj->nodevisited = true;
+                visited.push_back(obj);
+                Queue.push_back(obj);
+            }
+            std::sort(Queue.begin(), Queue.end(), CompareNode);
+           
+            if (current == endnode)
+            {
+               
+                while (current != startnode)
+                {
+                    path.insert(path.begin(), current); // Insert at the beginning
+                    current = current->parent;
+                   
+
+                }
+
+                for (auto obj : visited)
+                {
+                    obj->nodevisited = false;
+                    obj->parent = NULL;
+                    obj->multi = 1;
+                }
+               
+                
+                visited.clear();
+                Queue.clear();
+                break;
+           }
+   }
+}
+
+void Troop::TroopPathINIT(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist)
+{
+    indy = 0;
+    std::pair<short, short> pointerindex = GetGridIndex(GlobalMouse);
+    std::pair<short, short> soldierindex = GetGridIndex(location);
+
+    Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    endnode = &Nodelist[pointerindex.second][pointerindex.first];
+    CalcH(Nodelist, endnode, 1000, 1000);
+    startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    if (!endnode->state == 1)
+    {
+        endnode->state = 0;
+    }
+    startnode->state = 0;
+   
+    FindPath(Nodelist);
+
+    isactive = true;
+
+}
+
+void Troop::FindAttackPath(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding)
+{
+    Vector2 temp = {0,0};
+    float current = 0;
+    float prev = 10000000;
+    indy = 0;
+    for (auto i : ABuilding->attackpoints)
+    {
+            
+        current = Vector2Distance(i, location);
+        
+        if (current < prev)
+        {   
+            temp = i;
+            prev = current;
+        }
+        
+    }
+    
+    std::pair<short, short> pointerindex = GetGridIndex(temp);
+    std::pair<short, short> soldierindex = GetGridIndex(location);
+
+    Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    endnode = &Nodelist[pointerindex.second][pointerindex.first];
+
+    buildingattacktarget = ABuilding;
+    CalcH(Nodelist, endnode, 1000, 1000);
+    startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    endnode->state = 0;
+    startnode->state = 0;
+
+    
+    FindPath(Nodelist);
+    isactive = true;
+    attackmode = true;
+
+}
 
 void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Medic>& GridOMedic)
 {
@@ -94,6 +281,7 @@ void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, 
         newSoldier.location = ABuilding->location;
         newSoldier.hitbox = { ABuilding->location.x, ABuilding->location.y,15,15 };
         newSoldier.Dcolor = WHITE;
+        newSoldier.attackdmg = 10;
         GridOSoldier.push_back(newSoldier);
         TotalTroops.push_back(&GridOSoldier.back());
     }
@@ -107,6 +295,7 @@ void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, 
         newMedic.location = ABuilding->location;
         newMedic.hitbox = { ABuilding->location.x, ABuilding->location.y,10,10 };
         newMedic.Dcolor = GREEN;
+        newMedic.attackdmg = 5;
         GridOMedic.push_back(newMedic);
         TotalTroops.push_back(&GridOMedic.back());
         break;
@@ -127,6 +316,12 @@ float Troop::CalculateHealthBoxWidth()
     float percent = health / maxhealth;
     return Lerp(hitbox.width , hitbox.width * percent, 0.1);
 }
+
+
+
+
+
+
 void DrawCircleObj(Circle circle, Color color, int i)
 {
     if (i == 1)

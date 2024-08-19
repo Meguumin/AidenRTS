@@ -70,6 +70,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PublicIncludeDirectories>
+    </PublicIncludeDirectories>
+    <SourcePath>C:\Users\Aiden\source\repos\AidenRTS\AidenRTS\src;$(SourcePath)</SourcePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,6 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\Aiden\source\repos\AidenRTS\AidenRTS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,6 +139,7 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="drawgui.cpp" />
     <ClCompile Include="misc.cpp" />
+    <ClCompile Include="opponentbehaviour.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="orebehaviour.cpp" />
     <ClCompile Include="troops.cpp" />
@@ -142,15 +149,18 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audiohandler.h" />
-    <ClInclude Include="buildings.h" />
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="drawgui.h" />
-    <ClInclude Include="misc.h" />
-    <ClInclude Include="orebehaviour.h" />
-    <ClInclude Include="troops.h" />
-    <ClInclude Include="troopselection.h" />
-    <ClInclude Include="pathfinding.h" />
+    <ClInclude Include="include\audiohandler.h" />
+    <ClInclude Include="include\buildings.h" />
+    <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\drawgui.h" />
+    <ClInclude Include="include\misc.h" />
+    <ClInclude Include="include\opponentbehaviour.h" />
+    <ClInclude Include="include\orebehaviour.h" />
+    <ClInclude Include="include\Pathfinding.h" />
+    <ClInclude Include="include\raygui.h" />
+    <ClInclude Include="include\raymath.h" />
+    <ClInclude Include="include\troops.h" />
+    <ClInclude Include="include\troopselection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,9 @@
 #include "drawgui.h"
 #include <raylib.h>
 #include "raygui.h"
+#include "buildings.h"
+#include "troops.h"
+
 
 void drawmoneytop(int m)
 {
@@ -23,3 +26,13 @@ void Drawbuildinghighlights(int PlacementS, Vector2 GlobalMouse, Circle Range)
         }
     }
 }
+
+
+
+
+
+
+
+
+
+

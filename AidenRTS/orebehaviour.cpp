@@ -1,7 +1,8 @@
 #include "orebehaviour.h"
 #include "misc.h"
 #include "troops.h"
-void GenerateOre(std::vector<Ore>& ListOres, int amount)
+#include "buildings.h"
+void GenerateOre(std::vector<Ore>& ListOres, int amount, std::vector<Rectangle> GameMap)
 {
 	int givenid = 0;
 	for (int i = 0; i < amount; ++i)
@@ -19,7 +20,20 @@ void GenerateOre(std::vector<Ore>& ListOres, int amount)
        
         }
 		newOre.randomrotation = float(GetRandomValue(0, 360));
-		newOre.OreLocation = RandomVector2Location(-10000, 10000);
+		
+		
+			
+		newOre.OreLocation = RandomVector2Location(0, 11000);
+
+		for (auto i :GameMap)
+		{
+			while (CheckCollisionPointRec(newOre.OreLocation, i))
+			{
+				newOre.OreLocation = RandomVector2Location(0, 11000);
+			}
+		}
+		
+		
 		UpdateTroopHitbox(newOre.Rectangle, newOre.OreLocation);
 		newOre.ido = givenid;
 		givenid++;	

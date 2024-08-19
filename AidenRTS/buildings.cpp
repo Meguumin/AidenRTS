@@ -1,7 +1,8 @@
 #include "buildings.h"
 #include "misc.h"
 #include "raygui.h"
-void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons)
+
+void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture)
 {
     if (!CheckCollisionWithBuildings(Buttons) && money >= 500 && CheckCircleCollisionOBJ(Top.range, GlobalMouse))
     {
@@ -13,13 +14,27 @@ void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<R
             break;
         case 2:
             money -= 300;
-            CreateNewBarracks(Barracks, GlobalMouse, TotalBuildings);
+            CreateNewBarracks(Barracks, GlobalMouse, TotalBuildings, &BarrackTexture);
             break;
         case 3:
 
             break;
         }
     }
+}
+
+void GenerateAttackPoints(Building* ABuilding)
+{
+    //bottom
+    ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x + ABuilding->hitbox.width /2 ,   ABuilding->location.y + ABuilding->hitbox.width });
+    //top
+    ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x + ABuilding->hitbox.width / 2 ,   ABuilding->location.y });
+    ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x,   ABuilding->location.y + ABuilding->hitbox.width / 2 });
+    ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x + ABuilding->hitbox.width,   ABuilding->location.y + ABuilding->hitbox.width / 2 });
+}
+void Building::DrawBTexture()
+{
+    DrawTexture(*main, hitbox.x, hitbox.y  , WHITE);
 }
 void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings)
 {
@@ -33,10 +48,13 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
 
     newRefinery.location = GlobalMouse;
     newRefinery.hitbox = { 0, 0 , 60 , 30 };
+    newRefinery.buildinghealth = 50;
+    newRefinery.buildingmaxhealth = 50;
     UpdateTroopHitbox(newRefinery.hitbox, newRefinery.location);
 
     newTruck.parentrefinery = &newRefinery;
     newTruck.location = newRefinery.location;
+    newTruck.movementspeed = 150;
     newTruck.Dcolor = RED;
     UpdateTroopHitbox(newTruck.hitbox, newTruck.location);
     newRefinery.childtrucks.push_back(newTruck);
@@ -44,18 +62,22 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
     TotalBuildings.push_back(&newRefinery);
 
 }
-void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings)
+
+void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture)
 {
 
 
     Barracks.push_back(Barrack());
     Barrack& newBarrack = Barracks.back();
-
-    newBarrack.hitbox = { 0, 0 , 40 , 40 };
+    newBarrack.main = texture;
+    newBarrack.buildingmaxhealth = 50;
+    newBarrack.buildinghealth = 50;
+    newBarrack.hitbox = { 0, 0 , float(newBarrack.main->width) , float(newBarrack.main->height) };
     newBarrack.location = GlobalMouse;
     UpdateTroopHitbox(newBarrack.hitbox, newBarrack.location);
     TotalBuildings.push_back(&newBarrack);
 }
+
 bool CheckCollisionWithBuildings(std::vector<Rectangle*> Buttons)
 {
     bool tf = false;
@@ -77,6 +99,21 @@ void Refinery::MoneyText(int i, bool& d)
     }
 }
 
+void Building::DrawHealth()
+{
+    DrawRectangleRec(Rectangle{ hitbox.x,hitbox.y - 4,hitbox.width, 2 }, RED);
+    DrawRectangleRec(Rectangle{ hitbox.x,hitbox.y - 4,CalculateHealthBoxWidth(), 2 }, GREEN);
+
+}
+float Building::CalculateHealthBoxWidth()
+{
+    float percent = buildinghealth / buildingmaxhealth;
+    float minHealthBoxWidth = 0.0f; 
+    float widthDifference = hitbox.width - minHealthBoxWidth;
+    return Lerp(minHealthBoxWidth, hitbox.width, percent);
+}
+
+
 
 void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money)
 {
@@ -92,7 +129,7 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
             for (int t = 0; t < ListOres.size(); ++t)
             {
 
-                //doesnt work for singular ore
+               
                 auto Distance = sqrt(pow((ListOres[t].OreLocation.x - childtrucks[i].parentrefinery->location.x), 2) + pow((ListOres[t].OreLocation.y - childtrucks[i].parentrefinery->location.y), 2));
                 if (Distance < previousdistance && !ListOres[t].currentlygettingmined)
                 {
@@ -180,20 +217,27 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
         UpdateTroopHitbox(childtrucks[i].hitbox, childtrucks[i].location);
     }
 }
-CommandCenter CommandCenter::CreateNewCommandCenter(Vector2 GlobalMouse)
+void CommandCenter::initializeCC(Vector2 GlobalMouse, Texture2D* texture)
 {
-    CommandCenter Top;
-    Top.CommandCenterPlaced = true;
-    Top.location = GlobalMouse;
-    Top.range.radius = 500.0;
-    Top.range.centerpos = Vector2{ Top.location.x + 35, Top.location.y + 35 };
-    return Top;
+   
+   main = texture;
+   float halves = main->width / 2;
+   buildinghealth = 500;
+   buildingmaxhealth = 500;
+   CommandCenterPlaced = true;
+   location = GlobalMouse;
+   range.radius = 500.0;
+   hitbox = { location.x, location.y, float(main->width),float(main->height) };
+   range.centerpos = Vector2{location.x +halves , location.y +halves };
+ 
+   
 }
 
-void CommandCenter::DrawCommandCenter(CommandCenter i)
+void CommandCenter::DrawCommandCenter()
 {
-    DrawRectangleV(i.location, Vector2{ 70,70 }, GREEN);
-    DrawCircleObj(i.range, WHITE, 2);
+   
+    DrawTexture(*main,hitbox.x, hitbox.y,  WHITE );
+    DrawCircleObj(range, WHITE, 2);
 }
 void Refinery::DrawGUI()
 {

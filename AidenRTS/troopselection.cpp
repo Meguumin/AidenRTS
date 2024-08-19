@@ -9,9 +9,9 @@ void CurrentlySelected(std::vector<Troop*>& TroopSelected, std::vector<Troop*>& 
   
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_SHIFT) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
+                // & makes it a pointer
             if (CheckCollisionPointRec(mousepoint, TotalTroops[i]->hitbox))
             {
-                // & makes it a pointer
                 TroopSelected.push_back(TotalTroops[i]);
             }
         } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && CheckCollisionRecs(sBox, TotalTroops[i]->hitbox) && sBox.height > 10 && sBox.width > 10)
@@ -35,7 +35,13 @@ void CurrentlySelected(std::vector<Troop*>& TroopSelected, std::vector<Troop*>& 
    
     
 }
-
+void DrawSelectionCirlce(Vector2 pos) 
+{
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
+    {
+        DrawCircleV(pos, 10, Fade(YELLOW, 0.5));
+    }
+}
 
 
 Rectangle DrawSelection(Vector2& a, Vector2& b, Rectangle& box, bool& initial, Camera2D P)

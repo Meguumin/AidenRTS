@@ -5,13 +5,12 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{5b6b1402-d7b8-44b1-a334-f7078ca37dec}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,37 +44,49 @@
     <ClCompile Include="audiohandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="opponentbehaviour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="buildings.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\audiohandler.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\drawgui.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="orebehaviour.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\misc.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="pathfinding.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\opponentbehaviour.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="troops.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\orebehaviour.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="troopselection.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\Pathfinding.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="misc.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\raygui.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="drawgui.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\raymath.h">
+      <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="audiohandler.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\troops.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\troopselection.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\buildings.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\camera.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
