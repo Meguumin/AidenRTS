@@ -23,12 +23,28 @@ void  Opponent::CreateOppBarracks(Texture2D* texture, std::vector<Building*>& To
     OppBarracks.push_back(Barrack());
     Barrack& newBarrack = OppBarracks.back();
     newBarrack.main = texture;
-    newBarrack.buildingmaxhealth = 50;
-    newBarrack.buildinghealth = 50;
+    newBarrack.buildingmaxhealth = 200;
+    newBarrack.buildinghealth = 200;
     newBarrack.hitbox = { 0, 0 , float(newBarrack.main->width) , float(newBarrack.main->height) };
     newBarrack.location = Add2Vector2(base.location, Vector2{100, 100});
     GenerateAttackPoints(&newBarrack);
     UpdateTroopHitbox(newBarrack.hitbox, newBarrack.location);
     OppTotalBuildings.push_back(&newBarrack);
     TotalBuildings.push_back(&newBarrack);
+}
+
+void Opponent::CreateSoldier()
+{
+    Soldier newSoldier;
+    newSoldier.health = 100;
+    newSoldier.maxhealth = 100;
+    newSoldier.prevhealthboxwidth = 15;
+    newSoldier.movementspeed = 150; 
+    newSoldier.target = Vector2{base.location.x + GetRandomValue(60, -60), base.location.y + GetRandomValue(0, -60) };
+    newSoldier.location = Vector2{base.location.x + GetRandomValue(60, -60), base.location.y + GetRandomValue(0, -60) };
+    newSoldier.hitbox = { newSoldier.location.x,   newSoldier.location.y,15,15 };
+    newSoldier.Dcolor = RED;
+    newSoldier.attackdmg = 10;
+    GridOppSoldier.push_back(newSoldier);
+    OppTotalTroops.push_back(&GridOppSoldier.front());
 }

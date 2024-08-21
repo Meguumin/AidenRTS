@@ -67,7 +67,7 @@
     <ClInclude Include="include\orebehaviour.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="include\Pathfinding.h">
+    <ClInclude Include="include\pathfinding.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="include\raygui.h">

@@ -74,7 +74,11 @@
         Barracks.reserve(1000);
 
         Opponent YourNightmare;
-
+        YourNightmare.OppTotalTroops.reserve(1000);
+        YourNightmare.OppRefineries.reserve(1000);
+        YourNightmare.OppBarracks.reserve(1000);
+        YourNightmare.OppTotalBuildings.reserve(1000);
+        YourNightmare.GridOppSoldier.reserve(1000);
         enum BPlacementStates
         {
             NOTHINGSELECTED = 0,
@@ -137,34 +141,26 @@
         
         YourNightmare.initializeopp(&Commandopptexture);
         YourNightmare.CreateOppBarracks(&Barrackopptexture, TotalBuildings);
+        YourNightmare.CreateSoldier();
+
         TotalBuildings.push_back(&YourNightmare.base);
         TotalBuildings.push_back(&Top);
-
+        
 
         Music Devotion = LoadMusicStream("resources/Devotion.wav");
         PlayMusicStream(Devotion);
 
 
-        for (int i = 0; i < TotalBuildings.size(); ++i)
-        {
-            std::pair<short, short> index = GetGridIndex(Vector2{ TotalBuildings[i]->location.x, TotalBuildings[i]->location.y });
-            for (int t = 0; t < ceil(TotalBuildings[i]->hitbox.width / 11); ++t)
-            {
-                for (int y = 0; y < ceil(TotalBuildings[i]->hitbox.height / 11); ++y)
-                {
-                    Nodelist[index.second + y][index.first + t].state = 1;
-                }
-            }
-        }
+        std::pair<bool, Troop*> pairbuffer;
 
-
+        
         while (!WindowShouldClose())
         {
           
           GlobalMouse = GetScreenToWorld2D(GetMousePosition(), Pcamera);
           UpdateCamera(Pcamera,CameraLocation,cameraspeed );
           UpdateZoom(Pcamera);
-          UpdateMusicStream(Devotion);
+          //UpdateMusicStream(Devotion);
 
           int u = floor((GlobalMouse.x) / 11);
           int y = floor((GlobalMouse.y) / 11);
@@ -193,21 +189,34 @@
                       TotalTroops[i]->NormalizeDir();
                   }
                  
-                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]))
+                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]) && u > 0 && y > 0 )
                   {
-
+                      pairbuffer = MouseCollisionWithTroop(YourNightmare.OppTotalTroops, GlobalMouse);
                       TotalTroops[i]->ResetAttack();
 
                       if (CollisionWithGameObjects(GameMap, GlobalMouse))
                       {
                         if (CollisionWithOpponentBuildings(YourNightmare.OppTotalBuildings, GlobalMouse, TotalTroops[i]))
-                          {
-                              TotalTroops[i]->FindAttackPath(GlobalMouse, Nodelist, TotalTroops[i]->buildingattacktarget);
-                          }
-                          else 
-                          {
-                              TotalTroops[i]->TroopPathINIT(GlobalMouse, Nodelist);
-                          }
+                        {
+                              TotalTroops[i]->FindAttackPathForBuilding(GlobalMouse, Nodelist, TotalTroops[i]->buildingattacktarget);
+                        }
+                        
+                        //paint buffer first is a bool value to determine if mouse is on an enemy troop
+
+                        else if (pairbuffer.first)
+                        {
+                            if (auto soldier = dynamic_cast<Soldier*>(TotalTroops[i])) {
+                                soldier->troopattacktarget = pairbuffer.second;
+                                soldier->FindAttackTroop(pairbuffer, Nodelist); // Directly calls Soldier::FindAttackTroop
+                            }
+                            else if (auto medic = dynamic_cast<Medic*>(TotalTroops[i])) {
+                              
+                            }
+                           
+                        }
+                        else {
+                            TotalTroops[i]->TroopPathINIT(GlobalMouse, Nodelist);
+                        }
                        }                        
                    }
 
@@ -219,7 +228,20 @@
 
                   if (TotalTroops[i]->isattacking)
                   {
-                      TotalTroops[i]->Attack();
+                      switch (TotalTroops[i]->GetAttackType())
+                      {
+                      case 0:
+
+                      case 1:
+                          //building attack target
+                          TotalTroops[i]->AttackBuilding();
+                          break;
+                      case 2:
+                          //troop attack target
+                          TotalTroops[i]->AttackTroop();
+                          break;
+                      }
+                     
                   }
                  
                   UpdateTroopHitbox(TotalTroops[i]->hitbox, TotalTroops[i]->location);
@@ -238,7 +260,18 @@
               {
                   ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture);
                  
-                 
+                  //This checks all buildings which could get bad, build into functions later
+                  for (int i = 0; i < TotalBuildings.size(); ++i)
+                  {
+                      std::pair<short, short> index = GetGridIndex(Vector2{ TotalBuildings[i]->location.x, TotalBuildings[i]->location.y });
+                      for (int t = 0; t < ceil(TotalBuildings[i]->hitbox.width / 11); ++t)
+                      {
+                          for (int y = 0; y < ceil(TotalBuildings[i]->hitbox.height / 11); ++y)
+                          {
+                              Nodelist[index.second + y][index.first + t].state = 1;
+                          }
+                      }
+                  }
               }
 
             
@@ -312,7 +345,7 @@
 
             DrawSelectionCirlce(GlobalMouse);
             Drawbuildinghighlights(PlacementS ,GlobalMouse,Top.range);
-           
+           // DrawFPS(0,0);
             if (!Top.CommandCenterPlaced)
             {
                 DrawRectangleV(GlobalMouse, Vector2{ 70,70 }, Fade(GREEN, 0.3f));
@@ -356,6 +389,7 @@
                     StartTimer(&TotalTroops[i]->attackcircle, 0.2);
                     TotalTroops[i]->startattackanimation = true;
                 }
+
                 DrawCircle(TotalTroops[i]->location.x, TotalTroops[i]->location.y, TotalTroops[i]->acr, Fade(YELLOW, 0.5));
                 if (IsUnitSelected(TroopSelected,  *TotalTroops[i]))
                 {
@@ -372,6 +406,14 @@
                 DrawLineEx(GetCenterPositionOfRectangle(TotalTroops[i]->location, TotalTroops[i]->hitbox), CalculateEnd(TotalTroops[i]), 1, BLACK);
             }
 
+            for (int i = 0; i < YourNightmare.OppTotalTroops.size(); ++i)
+            {
+                DrawRectangleRec(YourNightmare.OppTotalTroops[i]->hitbox, YourNightmare.OppTotalTroops[i]->Dcolor);
+                if (YourNightmare.OppTotalTroops[i]->health < YourNightmare.OppTotalTroops[i]->maxhealth)
+                {
+                    YourNightmare.OppTotalTroops[i]->DrawHealth();
+                }                
+            }
             if (TroopSelected.size() > 0)
             {
                 for (int i = 0; i < TroopSelected.size(); ++i)
@@ -412,8 +454,8 @@
 
 
          //Gui
-          // DrawText(TextFormat(" %i", u), 0, 0, 40, WHITE);
-           //DrawText(TextFormat(" %i", y), 60, 0, 40, WHITE);
+           DrawText(TextFormat(" %i", u), 0, 0, 40, WHITE);
+           DrawText(TextFormat(" %i", y), 60, 0, 40, WHITE);
       
           
             drawmoneytop(money);

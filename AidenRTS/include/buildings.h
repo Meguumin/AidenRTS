@@ -11,6 +11,8 @@
 
 class Building{
 public:
+    
+    
     virtual void DrawGUI() { printf("T"); };
     Rectangle hitbox = { 0, 0 , 0 , 0 };
     Vector2 location = {0};

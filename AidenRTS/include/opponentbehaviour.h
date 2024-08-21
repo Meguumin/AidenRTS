@@ -14,9 +14,13 @@ std::vector<Barrack> OppBarracks;
 std::vector<Building*> OppTotalBuildings;
 std::vector<Soldier> GridOppSoldier;
 
+
+
+
+
 void initializeopp(Texture2D* texture);
 void CreateOppBarracks(Texture2D* texture, std::vector<Building*>& TotalBuildings);
-
+void CreateSoldier();
 
 }extern YourNightmare;
 

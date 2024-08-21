@@ -58,6 +58,7 @@ void Troop::ResetAttack()
    attackmode = false;
    acr = 0;
    buildingattacktarget = NULL;
+   troopattacktarget = NULL;
 }
 void Troop::ExitAnimation()
 {
@@ -139,7 +140,7 @@ bool CompareNode(const Node* p1, const Node* p2)
     return p1->values[0] < p2->values[0];
 }
 
-void Troop::Attack()
+void Troop::AttackBuilding()
 {
     
     if (TimerDone(attackcircle))
@@ -159,6 +160,24 @@ void Troop::Attack()
     }
 }
 
+void Troop::AttackTroop()
+{
+    if (TimerDone(attackcircle))
+    {
+        if (acr > 5)
+        {
+            acr = 0;
+            troopattacktarget->health -= attackdmg;
+        }
+        acr += 0.1;
+
+        StartTimer(&attackcircle, 0.03);
+    }
+    if (troopattacktarget->health <= 0)
+    {
+        isattacking = false;
+    }
+}
 void Troop::FindPath(std::vector<std::vector<Node>>& Nodelist)
 {  
     path.clear();
@@ -228,7 +247,7 @@ void Troop::TroopPathINIT(Vector2 GlobalMouse, std::vector<std::vector<Node>>& N
 
 }
 
-void Troop::FindAttackPath(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding)
+void Troop::FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding)
 {
     Vector2 temp = {0,0};
     float current = 0;
@@ -274,9 +293,10 @@ void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, 
     {
         //Soldier
         Soldier newSoldier;
-        newSoldier.health = 20;
+        newSoldier.health = 100;
         newSoldier.maxhealth = 100;
         newSoldier.movementspeed = 150;
+        newSoldier.prevhealthboxwidth = 15;
         newSoldier.target = Vector2{ ABuilding->location.x + GetRandomValue(60, -60), ABuilding->location.y + GetRandomValue(0, -60) };
         newSoldier.location = ABuilding->location;
         newSoldier.hitbox = { ABuilding->location.x, ABuilding->location.y,15,15 };
@@ -291,6 +311,7 @@ void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, 
         newMedic.health = 50;
         newMedic.maxhealth = 50;
         newMedic.movementspeed = 250;
+        newMedic.prevhealthboxwidth = 10;
         newMedic.target = Vector2{ ABuilding->location.x + GetRandomValue(60, -60), ABuilding->location.y + GetRandomValue(0, -60) };
         newMedic.location = ABuilding->location;
         newMedic.hitbox = { ABuilding->location.x, ABuilding->location.y,10,10 };
@@ -314,13 +335,52 @@ float Troop::CalculateHealthBoxWidth()
 {
    
     float percent = health / maxhealth;
-    return Lerp(hitbox.width , hitbox.width * percent, 0.1);
+    prevhealthboxwidth = Lerp(prevhealthboxwidth, health / maxhealth * hitbox.width, 1.0f / 1000);
+    return Lerp(prevhealthboxwidth, health / maxhealth * hitbox.width, 1.0f /1000);
+}
+
+int Troop::GetAttackType()
+{
+    if (buildingattacktarget == NULL && troopattacktarget == NULL)
+    {
+        return 0;
+    }
+    else if (buildingattacktarget != NULL)
+    {
+        return 1;
+    }
+    else if (troopattacktarget != NULL)
+    {
+        return 2;
+    }
 }
 
 
+void Soldier::FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist)
+{
+
+    std::pair<short, short> enemyindex = GetGridIndex(Vector2Add(buff.second->location, Vector2{ buff.second->hitbox.width / 2, buff.second->hitbox.height / 2 }));
+    std::pair<short, short> soldierindex = GetGridIndex(location);
+
+    Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    endnode = &Nodelist[enemyindex.second][enemyindex.first];
+
+    
+    CalcH(Nodelist, endnode, 1000, 1000);
+    startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    endnode->state = 0;
+    startnode->state = 0;
 
 
+    FindPath(Nodelist);
+    isactive = true;
+    attackmode = true;
 
+}
+void Troop::FindAttackTroop()
+{
+
+}
 
 void DrawCircleObj(Circle circle, Color color, int i)
 {
@@ -370,7 +430,24 @@ bool UnitRepositionCheckWhileMoving(std::vector<Troop*> TroopSelected, Troop& Tr
     return IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && TroopOBJ.isactive && IsUnitSelected(TroopSelected, TroopOBJ);
 }
 
-
+std::pair<bool, Troop*> MouseCollisionWithTroop(std::vector<Troop*> TroopList, Vector2 GlobalMouse)
+{
+    std::pair<bool, Troop*> buffer;
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && !IsKeyDown(KEY_LEFT_SHIFT))
+    {
+        for (int i = 0; i < TroopList.size(); ++i)
+        {
+            if (CheckCollisionPointRec(GlobalMouse, TroopList[i]->hitbox))
+            {
+                buffer = {true, TroopList[i]};
+                return buffer;
+            }
+        }
+       
+    }
+    buffer = {false, NULL };
+    return buffer;
+}
 void UpdateTroopHitbox(Rectangle& r, Vector2 m) 
 {
    r.x = m.x;

@@ -70,8 +70,8 @@ void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std:
     Barracks.push_back(Barrack());
     Barrack& newBarrack = Barracks.back();
     newBarrack.main = texture;
-    newBarrack.buildingmaxhealth = 50;
-    newBarrack.buildinghealth = 50;
+    newBarrack.buildingmaxhealth = 200;
+    newBarrack.buildinghealth = 200;
     newBarrack.hitbox = { 0, 0 , float(newBarrack.main->width) , float(newBarrack.main->height) };
     newBarrack.location = GlobalMouse;
     UpdateTroopHitbox(newBarrack.hitbox, newBarrack.location);

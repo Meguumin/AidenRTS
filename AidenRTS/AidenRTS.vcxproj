@@ -156,7 +156,7 @@
     <ClInclude Include="include\misc.h" />
     <ClInclude Include="include\opponentbehaviour.h" />
     <ClInclude Include="include\orebehaviour.h" />
-    <ClInclude Include="include\Pathfinding.h" />
+    <ClInclude Include="include\pathfinding.h" />
     <ClInclude Include="include\raygui.h" />
     <ClInclude Include="include\raymath.h" />
     <ClInclude Include="include\troops.h" />

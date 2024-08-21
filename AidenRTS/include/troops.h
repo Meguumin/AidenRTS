@@ -16,6 +16,8 @@ public:
     bool isactive = false;
     Vector2 target = { 0 };
 
+    virtual void FindAttackTroop();
+
     Vector2 location = { 0 };
     Vector2 direction = { 0,0 };
     std::vector<Node*> visited;
@@ -35,9 +37,9 @@ public:
     bool attackmode = false;
     bool isattacking = false;
     bool startattackanimation = false;
-
+   
+    float prevhealthboxwidth = 0;
     float movementspeed = 0;
-    // *getFrametime
     int indy = 0;
 
     short formationposition = 0;
@@ -45,26 +47,30 @@ public:
     Node* startnode;
     Node* endnode;
 
+    Troop* troopattacktarget;
     Building* buildingattacktarget;
 
     Rectangle hitbox = { 0, 0 ,0 , 0 };
     void FindPath(std::vector<std::vector<Node>>& Nodelist);
-    void Attack();
+    void AttackBuilding();
+    void AttackTroop();
     void ResetAttack();
     void NormalizeDir();
     void DrawHealth();
     void DrawLine();
     float CalculateHealthBoxWidth();
     void ExitAnimation();
-    void FindAttackPath(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding);
-   
+    void FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding);
+    int GetAttackType();
+    
     void TroopPathINIT(Vector2 Globalmouse, std::vector<std::vector<Node>>& Nodelist);
     Color Dcolor;
 };
 
 class Soldier : public Troop {
 public:
-   
+
+    virtual void FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist);
 };
 class Medic : public Troop {
 public:
@@ -108,7 +114,7 @@ bool CompareNode(const Node* p1, const Node* p2);
 void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected);
 void UpdateTroopHitbox(Rectangle& r, Vector2 m);
 void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Medic>& GridOMedic);
-
+std::pair<bool, Troop*> MouseCollisionWithTroop(std::vector<Troop*> TroopList, Vector2 GlobalMouse);
 bool IsUnitSelected(std::vector<Troop*> TroopSelected,  Troop& TroopOBJ);
 bool ShouldFollowMouse(std::vector<Troop*> TroopSelected, Troop& TroopOBJ);
 bool EnableTarget(Troop& TroopOBJ);
