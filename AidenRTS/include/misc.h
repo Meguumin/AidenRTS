@@ -5,6 +5,8 @@
 #include <algorithm> 
 #include <cmath>
 class Building;
+#include "pathfinding.h"
+
 typedef struct Timer {
     double startTime;   // Start time (seconds)
     double lifeTime;    // Lifetime (seconds)
@@ -22,7 +24,7 @@ bool TimerDone(Timer timer);
 Rectangle GetRectFromPointer(Building* B);
 
 double GetElapsed(Timer timer);
-
+bool mousecollisionwithstate1(Vector2 location, std::vector<std::vector<Node>>& Nodelist);
 Vector2 RandomVector2Location(int x, int y);
 Vector2 Add2Vector2(Vector2 a, Vector2 b);
 Vector2 GetCenterPositionOfRectangle(Vector2 location, Rectangle x);

@@ -448,6 +448,7 @@ std::pair<bool, Troop*> MouseCollisionWithTroop(std::vector<Troop*> TroopList, V
     buffer = {false, NULL };
     return buffer;
 }
+
 void UpdateTroopHitbox(Rectangle& r, Vector2 m) 
 {
    r.x = m.x;

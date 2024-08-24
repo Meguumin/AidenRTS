@@ -43,3 +43,14 @@ Rectangle GetRectFromPointer(Building* B)
     return y.hitbox;
 }
 
+bool mousecollisionwithstate1(Vector2 location, std::vector<std::vector<Node>>& Nodelist)
+{
+    std::pair<short,short> buff = GetGridIndex(location);
+    if (Nodelist[buff.second][buff.first].state == 0)
+    {
+        return false;
+    }
+    else {
+        return true;
+        }
+}

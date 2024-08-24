@@ -60,6 +60,7 @@
         std::vector<Troop*> TotalTroops;
         std::vector<Refinery> Refineries;
         std::vector<Barrack> Barracks;
+        std::vector<Building*> FriendlyBuildings;
         std::vector<Building*> TotalBuildings;
         std::vector<Rectangle*> RectangleBuildings;
         std::vector<Ore> ListOres;
@@ -72,6 +73,7 @@
         GridOMedic.reserve(1000);
         Refineries.reserve(1000);
         Barracks.reserve(1000);
+        FriendlyBuildings.reserve(1000);
 
         Opponent YourNightmare;
         YourNightmare.OppTotalTroops.reserve(1000);
@@ -145,7 +147,7 @@
 
         TotalBuildings.push_back(&YourNightmare.base);
         TotalBuildings.push_back(&Top);
-        
+        FriendlyBuildings.push_back(&Top);
 
         Music Devotion = LoadMusicStream("resources/Devotion.wav");
         PlayMusicStream(Devotion);
@@ -189,7 +191,7 @@
                       TotalTroops[i]->NormalizeDir();
                   }
                  
-                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]) && u > 0 && y > 0 )
+                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]) && u > 0 && y > 0 && !CheckCollsionMousewithFriendlyBuildings(GlobalMouse, FriendlyBuildings))
                   {
                       pairbuffer = MouseCollisionWithTroop(YourNightmare.OppTotalTroops, GlobalMouse);
                       TotalTroops[i]->ResetAttack();
@@ -253,12 +255,12 @@
 
               for (int i = 0; i < Refineries.size(); ++i)
               {
-                  Refineries[i].UpdateTrucks(Refineries[i].childtrucks,ListOres, money);   
+                  Refineries[i].UpdateTrucks(Refineries[i].childtrucks,ListOres, money, Nodelist);   
               }
 
-              if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+              if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && u > 0 && y > 0)
               {
-                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture);
+                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture, FriendlyBuildings);
                  
                   //This checks all buildings which could get bad, build into functions later
                   for (int i = 0; i < TotalBuildings.size(); ++i)

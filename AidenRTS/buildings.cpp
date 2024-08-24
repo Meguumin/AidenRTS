@@ -2,7 +2,7 @@
 #include "misc.h"
 #include "raygui.h"
 
-void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture)
+void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings)
 {
     if (!CheckCollisionWithBuildings(Buttons) && money >= 500 && CheckCircleCollisionOBJ(Top.range, GlobalMouse))
     {
@@ -10,11 +10,11 @@ void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<R
         case 1:
             //
             money -= 500;
-            CreateNewRefinery(Refineries, GlobalMouse, TotalBuildings);
+            CreateNewRefinery(Refineries, GlobalMouse, TotalBuildings,FriendlyBuildings);
             break;
         case 2:
             money -= 300;
-            CreateNewBarracks(Barracks, GlobalMouse, TotalBuildings, &BarrackTexture);
+            CreateNewBarracks(Barracks, GlobalMouse, TotalBuildings, &BarrackTexture, FriendlyBuildings);
             break;
         case 3:
 
@@ -36,7 +36,7 @@ void Building::DrawBTexture()
 {
     DrawTexture(*main, hitbox.x, hitbox.y  , WHITE);
 }
-void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings)
+void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings,  std::vector<Building*>& FriendlyBuildings)
 {
     Truck newTruck;
 
@@ -55,15 +55,16 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
     newTruck.parentrefinery = &newRefinery;
     newTruck.location = newRefinery.location;
     newTruck.movementspeed = 150;
+   // newTruck.hitbox = { 0, 0 , 60 , 30 };
     newTruck.Dcolor = RED;
     UpdateTroopHitbox(newTruck.hitbox, newTruck.location);
     newRefinery.childtrucks.push_back(newTruck);
 
     TotalBuildings.push_back(&newRefinery);
-
+    FriendlyBuildings.push_back(&newRefinery);
 }
 
-void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture)
+void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture, std::vector<Building*>& FriendlyBuildings)
 {
 
 
@@ -76,6 +77,7 @@ void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std:
     newBarrack.location = GlobalMouse;
     UpdateTroopHitbox(newBarrack.hitbox, newBarrack.location);
     TotalBuildings.push_back(&newBarrack);
+    FriendlyBuildings.push_back(&newBarrack);
 }
 
 bool CheckCollisionWithBuildings(std::vector<Rectangle*> Buttons)
@@ -115,13 +117,13 @@ float Building::CalculateHealthBoxWidth()
 
 
 
-void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money)
+void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money, std::vector<std::vector<Node>>& Nodelist)
 {
     for (int i = 0; i < childtrucks.size(); ++i)
     {
         double previousdistance = 10000;
         MoneyText(1, DT);
-        childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x  ,  childtrucks[i].target.y - childtrucks[i].hitbox.y });
+        childtrucks[i].NormalizeDir();
         switch (childtrucks[i].s) {
         case 1:
             //IDLE
@@ -134,11 +136,10 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
                 if (Distance < previousdistance && !ListOres[t].currentlygettingmined)
                 {
                     previousdistance = Distance;
-                    childtrucks[i].target = ListOres[t].OreLocation;
+                   // childtrucks[i].FindPath(Nodelist);
                     childtrucks[i].CurrentOreBeingMined = &ListOres[t];
                     childtrucks[i].id = ListOres[t].ido;
                 }
-
 
                 if (ListOres.size() == 0)
                 {
@@ -149,32 +150,65 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
             childtrucks[i].CurrentOreBeingMined->currentlygettingmined = true;
             if (!(childtrucks[i].target == childtrucks[i].location))
             {
+                childtrucks[i].TroopPathINIT(childtrucks[i].CurrentOreBeingMined->OreLocation, Nodelist);
                 childtrucks[i].s = childtrucks[i].MOVINGTOORE;
             }
 
             break;
         case 2:
-            //MOVINGTOORE
-            // 100 max distance movementspeed
-            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-
-            //custom bool operator in Vector2 Definition
-            if (childtrucks[i].location == childtrucks[i].target)
+           
+            Vector2 leaderTarget = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+            
+              
+            if (Vector2Distance(childtrucks[i].location, childtrucks[i].target) < 0.01f)
             {
+
+                childtrucks[i].indy++;
+            }
+           
+             childtrucks[i].target = leaderTarget;
+             childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x  ,  childtrucks[i].target.y - childtrucks[i].hitbox.y });
+
+            if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+            {
+                childtrucks[i].isactive = false;
+                childtrucks[i].indy = 0;
+                childtrucks[i].path.clear();
                 childtrucks[i].s = childtrucks[i].INITIATETIMER;
             }
+
+
+            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
+
+          
             break;
         case 3:
             //MOVINGBACK
-            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-            //custom bool operator in Vector2 Definition
-            if (childtrucks[i].location == childtrucks[i].target)
+            leaderTarget = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+
+            if (Vector2Distance(childtrucks[i].location, childtrucks[i].target) < 0.01f)
             {
+
+                childtrucks[i].indy++;
+            }
+
+            childtrucks[i].target = leaderTarget;
+            childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x  ,  childtrucks[i].target.y - childtrucks[i].hitbox.y });
+
+            if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+            {
+                childtrucks[i].isactive = false;
+                childtrucks[i].indy = 0;
+                childtrucks[i].path.clear();
+                
                 DT = true;
                 StartTimer(&MT, double(0.2));
                 money++;
                 childtrucks[i].s = childtrucks[i].IDLE;
             }
+
+            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
+         
             break;
         case 4:
             //INITIATETIMER
@@ -205,7 +239,8 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
 
 
                 }
-                childtrucks[i].target = childtrucks[i].parentrefinery->location;
+                //childtrucks[i].target = childtrucks[i].parentrefinery->location;
+                childtrucks[i].TroopPathINIT(childtrucks[i].parentrefinery->location, Nodelist);
                 childtrucks[i].s = childtrucks[i].MOVINGBACK;
             }
             break;
@@ -248,4 +283,15 @@ void Refinery::DrawGUI()
 void Barrack::DrawGUI()
 {
     DrawText("Barrack", 696, 15, 50, BLACK);
+}
+bool CheckCollsionMousewithFriendlyBuildings(Vector2 location, std::vector<Building*>& TotalBuildings)
+{
+    for (auto i : TotalBuildings)
+    {
+        if (CheckCollisionPointRec(location, i->hitbox))
+        {
+            return true;
+        }
+    }
+    return false;
 }

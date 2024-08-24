@@ -29,7 +29,7 @@ class Refinery: public Building {
 public:
     std::vector<Truck> childtrucks;
     Timer MT;
-    void UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money);
+    void UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money, std::vector<std::vector<Node>>& Nodelist);
     void MoneyText(int i, bool& d);
     bool DT = false;
     void DrawGUI();
@@ -43,14 +43,15 @@ public:
     void initializeCC(Vector2 GlobalMouse, Texture2D* texture);
     void DrawCommandCenter();
 };
-void CreateNewRefinery( std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings);
+void CreateNewRefinery( std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, std::vector<Building*>& FriendlyBuildings);
 
 class Barrack : public Building {
 public:
    void DrawGUI();
 
 };
-void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture);
+void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture,std::vector<Building*>& FriendlyBuildings);
 void GenerateAttackPoints(Building* ABuilding);
-void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks,std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture);
+void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks,std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings);
 bool CheckCollisionWithBuildings(std::vector<Rectangle*> Buttons);
+bool CheckCollsionMousewithFriendlyBuildings(Vector2 location, std::vector<Building*>& TotalBuildings);
