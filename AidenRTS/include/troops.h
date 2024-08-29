@@ -10,14 +10,20 @@
 
 class Refinery;
 class Ore;
+class Soldier;
+class Medic;
 
 class Troop {
 public:
     bool isactive = false;
     Vector2 target = { 0 };
 
+    bool enem = false;
     virtual void FindAttackTroop();
-
+    virtual void KillTroop();
+    virtual void AttackBuilding();
+    virtual void AttackTroop();
+    virtual void FindAttackPathForBuilding();
     Vector2 location = { 0 };
     Vector2 direction = { 0,0 };
     std::vector<Node*> visited;
@@ -52,50 +58,45 @@ public:
 
     Rectangle hitbox = { 0, 0 ,0 , 0 };
     void FindPath(std::vector<std::vector<Node>>& Nodelist);
-    void AttackBuilding();
-    void AttackTroop();
     void ResetAttack();
     void NormalizeDir();
     void DrawHealth();
     void DrawLine();
     float CalculateHealthBoxWidth();
     void ExitAnimation();
-    void FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding);
+   
     int GetAttackType();
     
     void TroopPathINIT(Vector2 Globalmouse, std::vector<std::vector<Node>>& Nodelist);
     Color Dcolor;
 };
 
+
 class Soldier : public Troop {
 public:
-
+    virtual void AttackBuilding();
+    virtual void AttackTroop();
+    virtual void FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding);
     virtual void FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist);
+    virtual void KillTroop(std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Troop*>& OppTotalTroops, std::vector<Soldier>& GridOppSoldier);
 };
 class Medic : public Troop {
+
 public:
 };
+
 
 class Truck : public Troop {
 public:
     //will change later, star to get back value
     Refinery* parentrefinery;
-    enum TruckStates
-    {
-        IDLE = 1,
-        MOVINGTOORE = 2,
-        MOVINGBACK = 3,
-        INITIATETIMER = 4,
-        CURRENTLYMINING = 5,
-        NOORES = 6
-    };
-    TruckStates s = IDLE;
+    int state = 0;
     Ore* CurrentOreBeingMined;
     int id = 0;
 ;   // float moneyheld = 0;
-    Rectangle hitbox = { 0, 0 , 15 , 15 };
+    
     Timer timespentmining;
-   
+    void FindOre(float previousdistance, std::vector <Ore>& ListOres);
 };
 
 enum typeofmovement {
@@ -107,11 +108,11 @@ enum typeofmovement {
 
 
 Vector2 GetCenterOfGroup(Troop TroopOBJ, std::vector<Soldier> GridOSoldier);
-Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size);
+Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size, std::vector<std::vector<Node>>& Nodelist);
 Vector2 CalculateEnd(Troop* troop);
 //Convert Functions from SoldierOBJ  to TroopOBJ
 bool CompareNode(const Node* p1, const Node* p2);
-void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected);
+void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected, std::vector<std::vector<Node>>& Nodelist);
 void UpdateTroopHitbox(Rectangle& r, Vector2 m);
 void SetupTroop(int i, Building* ABuilding, std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Medic>& GridOMedic);
 std::pair<bool, Troop*> MouseCollisionWithTroop(std::vector<Troop*> TroopList, Vector2 GlobalMouse);

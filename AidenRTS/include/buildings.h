@@ -30,9 +30,15 @@ public:
     std::vector<Truck> childtrucks;
     Timer MT;
     void UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money, std::vector<std::vector<Node>>& Nodelist);
-    void MoneyText(int i, bool& d);
+    void MoneyText( bool& d);
     bool DT = false;
     void DrawGUI();
+};
+
+class PowerPlant : public Building 
+{
+public:
+    int power = 5;
 };
 
 class CommandCenter : public Building {
@@ -50,8 +56,9 @@ public:
    void DrawGUI();
 
 };
+void CreateNewPowerPlant(std::vector<PowerPlant>& PowerPlants, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture, std::vector<Building*>& FriendlyBuildings);
 void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture,std::vector<Building*>& FriendlyBuildings);
 void GenerateAttackPoints(Building* ABuilding);
-void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks,std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings);
+void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks,std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings, std::vector<PowerPlant>& PowerPlants, Texture2D PowerPlantTexture);
 bool CheckCollisionWithBuildings(std::vector<Rectangle*> Buttons);
 bool CheckCollsionMousewithFriendlyBuildings(Vector2 location, std::vector<Building*>& TotalBuildings);

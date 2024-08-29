@@ -10,7 +10,6 @@ bool TimerDone(Timer timer)
 {
     return GetTime() - timer.startTime >= timer.lifeTime;
 }
-
 double GetElapsed(Timer timer)
 {
     return GetTime() - timer.startTime;

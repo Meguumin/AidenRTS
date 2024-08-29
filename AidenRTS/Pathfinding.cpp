@@ -36,7 +36,6 @@ void CalcGandF(Node* current, std::vector<Node*> adjacents)
 // Grid is 1000 x 1000
 std::vector<Node*> GetAdjCells(std::vector<std::vector<Node>>& Nodelist, Node* current, int row, int col) {
     std::vector<Node*> adjacents;
-
     // Define offsets for movement in all eight directions
     int dx[] = { -1, 0, 1, 0, -1, -1, 1, 1 };
     int dy[] = { 0, 1, 0, -1, -1, 1, -1, 1 }; // dx and dy correspond to directions: left, right, up, down, and four diagonals
@@ -46,7 +45,9 @@ std::vector<Node*> GetAdjCells(std::vector<std::vector<Node>>& Nodelist, Node* c
         int newY = current->index2 + dy[i];
 
         // Check bounds and conditions
-        if ((newX >= 0 && newX < row) && (newY >= 0 && newY < col) && !Nodelist[newX][newY].nodevisited && Nodelist[newX][newY].state != 1)
+        
+        
+         if ((newX >= 0 && newX < row) && (newY >= 0 && newY < col) && !Nodelist[newX][newY].nodevisited && Nodelist[newX][newY].state != 1)
         {
             Nodelist[newX][newY].parent = current;
             if (i < 4) 
@@ -59,6 +60,7 @@ std::vector<Node*> GetAdjCells(std::vector<std::vector<Node>>& Nodelist, Node* c
                 adjacents.push_back(&Nodelist[newX][newY]);
             }
         }
+
     }
 
     return adjacents;

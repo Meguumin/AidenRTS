@@ -36,6 +36,7 @@ void  Opponent::CreateOppBarracks(Texture2D* texture, std::vector<Building*>& To
 void Opponent::CreateSoldier()
 {
     Soldier newSoldier;
+    newSoldier.enem = true;
     newSoldier.health = 100;
     newSoldier.maxhealth = 100;
     newSoldier.prevhealthboxwidth = 15;

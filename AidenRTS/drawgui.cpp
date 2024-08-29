@@ -24,6 +24,10 @@ void Drawbuildinghighlights(int PlacementS, Vector2 GlobalMouse, Circle Range)
         {
             DrawRectangleV(GlobalMouse, Vector2{ 40,40 }, Fade(BLUE, 0.3f));
         }
+        if (PlacementS == 3)
+        {
+            DrawRectangleV(GlobalMouse, Vector2{ 40,40 }, Fade(PURPLE, 0.3f));
+        }
     }
 }
 

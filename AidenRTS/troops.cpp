@@ -19,24 +19,61 @@ Vector2 GetCenterOfGroup(Troop TroopOBJ, std::vector<Soldier> GridOSoldier)
     return center;
 }
 
-Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size)
+Vector2 GetOffsetOfSquare(Vector2 leaderTarget, float formationSize, int size, std::vector<std::vector<Node>>& Nodelist)
 {
     Vector2 out = { 0 };
-
+    
     int row = size / formationSize;
     int col = size % int(formationSize);
     float offsetX = (col - formationSize / 2) * 20.0f; // Adjust the spacing as needed
     float offsetY = (row - formationSize / 2) * 20.0f; // Adjust the spacing as needed
+    std::pair<short, short> index = GetGridIndex(Vector2{leaderTarget.x+offsetX, leaderTarget.y});
+    while(Nodelist[index.second][index.first].state != 0)
+    {
+        offsetX += 8;
+        index.second++;
+    }
     out = { leaderTarget.x + offsetX, leaderTarget.y};
     
     return out;
 }
 
-
+void Soldier::KillTroop(std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Troop*>& OppTotalTroops, std::vector<Soldier>& GridOppSoldier)
+{
+    if (health < 0)
+    {
+        if (auto s = dynamic_cast<Soldier*>(this)) {
+            
+            //if (std::find_if(GridOSoldier.begin(), GridOSoldier.end(), s) != GridOSoldier.end())
+            //{
+                //GridOSoldier.erase(std::find(GridOSoldier.begin(), GridOSoldier.end(), *s));
+            //}
+            /*
+              if (std::find(GridOppSoldier.begin(), GridOppSoldier.end(), *s) != GridOppSoldier.end())
+            {
+                GridOppSoldier.erase(std::find(GridOppSoldier.begin(), GridOppSoldier.end(), *s));
+            }
+            */
+          
+           
+        }
+        else if (auto medic = dynamic_cast<Medic*>(this)) {
+           
+        }
+        if (std::find(TotalTroops.begin(), TotalTroops.end(), this) != TotalTroops.end())
+        {
+            TotalTroops.erase(std::find(TotalTroops.begin(), TotalTroops.end(), this));
+        }
+        if (std::find(OppTotalTroops.begin(), OppTotalTroops.end(), this) != OppTotalTroops.end())
+        {
+            OppTotalTroops.erase(std::find(OppTotalTroops.begin(), OppTotalTroops.end(), this));
+        }
+    }
+}
 
 void Troop::NormalizeDir()
 {
-    direction = Vector2Normalize(Vector2{ target.x - hitbox.x  , target.y - hitbox.y });
+   direction = Vector2Normalize(Vector2{ target.x - hitbox.x, target.y - hitbox.y });
 }
 
 void Troop::DrawLine()
@@ -75,7 +112,7 @@ void Troop::ExitAnimation()
 
 
 
-void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected)
+void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& TroopSelected, std::vector<std::vector<Node>>& Nodelist)
 {
          if (movement == square)
         {
@@ -99,7 +136,7 @@ void FollowMouse(typeofmovement movement, Troop& TroopOBJ, std::vector<Troop*>& 
                   if (TroopSelected.size() >= 2 && std::find(TroopSelected.begin(), TroopSelected.end(), &TroopOBJ) != TroopSelected.end() || TroopOBJ.maintain)
                     {
                    
-                      TroopOBJ.target = GetOffsetOfSquare(leaderTarget,TroopOBJ.groupsize, TroopOBJ.formationposition);
+                      TroopOBJ.target = GetOffsetOfSquare(leaderTarget,TroopOBJ.groupsize, TroopOBJ.formationposition, Nodelist);
      
                     }
                 
@@ -140,7 +177,7 @@ bool CompareNode(const Node* p1, const Node* p2)
     return p1->values[0] < p2->values[0];
 }
 
-void Troop::AttackBuilding()
+void Soldier::AttackBuilding()
 {
     
     if (TimerDone(attackcircle))
@@ -150,17 +187,18 @@ void Troop::AttackBuilding()
             acr = 0;
             buildingattacktarget->buildinghealth -= attackdmg;
         }
-        acr += 0.1;
+        acr += 0.1f;
         
         StartTimer(&attackcircle, 0.03);
     }
     if (buildingattacktarget->buildinghealth < 0)
     {
+        acr = 0;
         isattacking = false;
     }
 }
 
-void Troop::AttackTroop()
+void Soldier::AttackTroop()
 {
     if (TimerDone(attackcircle))
     {
@@ -169,22 +207,20 @@ void Troop::AttackTroop()
             acr = 0;
             troopattacktarget->health -= attackdmg;
         }
-        acr += 0.1;
+        acr += 0.1f;
 
         StartTimer(&attackcircle, 0.03);
     }
     if (troopattacktarget->health <= 0)
     {
+        
         isattacking = false;
     }
 }
 void Troop::FindPath(std::vector<std::vector<Node>>& Nodelist)
 {  
     path.clear();
-       
     
-  
-
     while (!Queue.empty())
    {
             Node* current = Queue[0];  
@@ -233,12 +269,15 @@ void Troop::TroopPathINIT(Vector2 GlobalMouse, std::vector<std::vector<Node>>& N
 
     Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
     endnode = &Nodelist[pointerindex.second][pointerindex.first];
+    endnode->state = 0;
     CalcH(Nodelist, endnode, 1000, 1000);
     startnode = &Nodelist[soldierindex.second][soldierindex.first];
+  /*
     if (!endnode->state == 1)
     {
         endnode->state = 0;
-    }
+    }   
+     */
     startnode->state = 0;
    
     FindPath(Nodelist);
@@ -247,7 +286,7 @@ void Troop::TroopPathINIT(Vector2 GlobalMouse, std::vector<std::vector<Node>>& N
 
 }
 
-void Troop::FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding)
+void Soldier::FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding)
 {
     Vector2 temp = {0,0};
     float current = 0;
@@ -381,7 +420,22 @@ void Troop::FindAttackTroop()
 {
 
 }
+void Troop::KillTroop()
+{
 
+}
+void Troop::AttackBuilding()
+{
+
+}
+void Troop::AttackTroop() 
+    {
+
+    }
+void Troop::FindAttackPathForBuilding()
+    {
+
+    }
 void DrawCircleObj(Circle circle, Color color, int i)
 {
     if (i == 1)

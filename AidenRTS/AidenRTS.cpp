@@ -60,6 +60,7 @@
         std::vector<Troop*> TotalTroops;
         std::vector<Refinery> Refineries;
         std::vector<Barrack> Barracks;
+        std::vector<PowerPlant> PowerPlants;
         std::vector<Building*> FriendlyBuildings;
         std::vector<Building*> TotalBuildings;
         std::vector<Rectangle*> RectangleBuildings;
@@ -73,6 +74,7 @@
         GridOMedic.reserve(1000);
         Refineries.reserve(1000);
         Barracks.reserve(1000);
+        PowerPlants.reserve(1000);
         FriendlyBuildings.reserve(1000);
 
         Opponent YourNightmare;
@@ -86,6 +88,7 @@
             NOTHINGSELECTED = 0,
             PLACEREFINERY = 1,
             PLACEBARRACKS = 2,
+            PLACEPOWERPLANT = 3,
         }PlacementS = NOTHINGSELECTED;
 
 
@@ -109,10 +112,11 @@
         Rectangle SelectionTroopbutton = { 900, 240, 70, 20 };
         Rectangle Refinerybutton = { 820, 270, 50, 50 };
         Rectangle Barrackbutton = { 875, 270, 50, 50 };
+        Rectangle PowerPlantbutton = { 930, 270, 50, 50 };
         Rectangle Medicbutton = { 820, 270, 50, 50 };
         Rectangle Soldierbutton = { 875, 270, 50, 50 };
 
-        std::vector<Rectangle*> Buttons =  { &Refinerybutton, &Barrackbutton, &Soldierbutton,&SelectionStructurebutton, &Medicbutton ,&SelectionTroopbutton };
+        std::vector<Rectangle*> Buttons =  { &Refinerybutton, &Barrackbutton, &Soldierbutton,&SelectionStructurebutton, &Medicbutton ,&SelectionTroopbutton,&PowerPlantbutton };
        //button layering issue?
 
 
@@ -131,7 +135,7 @@
         InitWindow(screenWidth, screenHeight, "RTS Testing");
         InitAudioDevice();
         Texture2D PowerPlanttexture = LoadTexture("resources/Powerplant.png");
-        Texture2D Barracktexture = LoadTexture("resources/Barrack.png");
+        Texture2D Barracktexture = LoadTexture("resources\\Barrack.png");
         Texture2D Barrackopptexture = LoadTexture("resources/BarrackOpp.png");
         Texture2D Commandtexture = LoadTexture("resources/CommandCenter.png");
         Texture2D Commandopptexture = LoadTexture("resources/CommandCenterOpp.png");
@@ -185,7 +189,7 @@
               for (int i = 0; i < TotalTroops.size(); ++i)
               { 
                  //TotalTroops[i]->ExitAnimation();
-
+                
                   if (TotalTroops[i]->isactive)
                   {
                       TotalTroops[i]->NormalizeDir();
@@ -212,7 +216,7 @@
                                 soldier->FindAttackTroop(pairbuffer, Nodelist); // Directly calls Soldier::FindAttackTroop
                             }
                             else if (auto medic = dynamic_cast<Medic*>(TotalTroops[i])) {
-                              
+                              //Medic pathfinding
                             }
                            
                         }
@@ -225,7 +229,7 @@
                
                   if(TotalTroops[i]->isactive && TotalTroops[i]->path.size() > 0)
                   {
-                     FollowMouse(movement, *TotalTroops[i], TroopSelected);
+                     FollowMouse(movement, *TotalTroops[i], TroopSelected, Nodelist);
                   }
 
                   if (TotalTroops[i]->isattacking)
@@ -260,7 +264,7 @@
 
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && u > 0 && y > 0)
               {
-                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture, FriendlyBuildings);
+                  ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture, FriendlyBuildings, PowerPlants, PowerPlanttexture);
                  
                   //This checks all buildings which could get bad, build into functions later
                   for (int i = 0; i < TotalBuildings.size(); ++i)
@@ -271,6 +275,7 @@
                           for (int y = 0; y < ceil(TotalBuildings[i]->hitbox.height / 11); ++y)
                           {
                               Nodelist[index.second + y][index.first + t].state = 1;
+                              //4 meaning building nodes
                           }
                       }
                   }
@@ -307,6 +312,9 @@
                       selectedbuilding = TotalBuildings[i];
                   }
               }
+
+
+
             BeginDrawing();
             
             ClearBackground(BLACK);
@@ -369,11 +377,16 @@
             {               
                 Barracks[i].DrawBTexture();
             }
+            for (int i = 0; i < PowerPlants.size(); ++i)
+            {
+                PowerPlants[i].DrawBTexture();
+            }
 
             for (int i = 0; i < YourNightmare.OppBarracks.size(); ++i)
             {
                 YourNightmare.OppBarracks[i].DrawBTexture();
             }
+
             for (auto i : TotalBuildings)
             {
                 i->CalculateHealthBoxWidth();
@@ -495,6 +508,18 @@
                         if (PlacementS == 0 || PlacementS == 1)//idle
                         {
                             PlacementS = PLACEBARRACKS;
+                        }
+                        else
+                        {
+                            PlacementS = NOTHINGSELECTED;
+                        }
+                    }
+
+                    if (GuiButton(*Buttons[6], "PowerGen"))
+                    {
+                        if (PlacementS == 0 || PlacementS == 1)//idle
+                        {
+                            PlacementS = PLACEPOWERPLANT;
                         }
                         else
                         {

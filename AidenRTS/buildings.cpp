@@ -2,7 +2,7 @@
 #include "misc.h"
 #include "raygui.h"
 
-void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings)
+void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<Refinery>& Refineries, int& money, CommandCenter Top, std::vector<Barrack>& Barracks, std::vector<Building*>& TotalBuildings, std::vector<Rectangle*> Buttons, Texture2D BarrackTexture, std::vector<Building*>& FriendlyBuildings, std::vector<PowerPlant>& PowerPlants, Texture2D PowerPlantTexture)
 {
     if (!CheckCollisionWithBuildings(Buttons) && money >= 500 && CheckCircleCollisionOBJ(Top.range, GlobalMouse))
     {
@@ -17,7 +17,7 @@ void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<R
             CreateNewBarracks(Barracks, GlobalMouse, TotalBuildings, &BarrackTexture, FriendlyBuildings);
             break;
         case 3:
-
+            CreateNewPowerPlant(PowerPlants, GlobalMouse,TotalBuildings,&PowerPlantTexture,FriendlyBuildings);
             break;
         }
     }
@@ -55,6 +55,7 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
     newTruck.parentrefinery = &newRefinery;
     newTruck.location = newRefinery.location;
     newTruck.movementspeed = 150;
+    newTruck.hitbox = { 0,0,15,15 };
    // newTruck.hitbox = { 0, 0 , 60 , 30 };
     newTruck.Dcolor = RED;
     UpdateTroopHitbox(newTruck.hitbox, newTruck.location);
@@ -63,7 +64,19 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
     TotalBuildings.push_back(&newRefinery);
     FriendlyBuildings.push_back(&newRefinery);
 }
-
+void CreateNewPowerPlant(std::vector<PowerPlant>& PowerPlants, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture, std::vector<Building*>& FriendlyBuildings)
+{
+    PowerPlants.push_back(PowerPlant());
+    PowerPlant& newPowerPlant = PowerPlants.back();
+    newPowerPlant.main = texture;
+    newPowerPlant.buildingmaxhealth = 200;
+    newPowerPlant.buildinghealth = 200;
+    newPowerPlant.hitbox = { 0, 0 , float(newPowerPlant.main->width) , float(newPowerPlant.main->height) };
+    newPowerPlant.location = GlobalMouse;
+    UpdateTroopHitbox(newPowerPlant.hitbox, newPowerPlant.location);
+    TotalBuildings.push_back(&newPowerPlant);
+    FriendlyBuildings.push_back(&newPowerPlant);
+}
 void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture, std::vector<Building*>& FriendlyBuildings)
 {
 
@@ -92,7 +105,7 @@ bool CheckCollisionWithBuildings(std::vector<Rectangle*> Buttons)
     }
     return tf;
 }
-void Refinery::MoneyText(int i, bool& d)
+void Refinery::MoneyText( bool& d)
 {
     if (TimerDone(MT))
     {
@@ -115,143 +128,143 @@ float Building::CalculateHealthBoxWidth()
     return Lerp(minHealthBoxWidth, hitbox.width, percent);
 }
 
+void Truck::FindOre(float previousdistance, std::vector <Ore>& ListOres) {
+    for (int t = 0; t < ListOres.size(); ++t)
+    {
+        auto Distance = sqrt(pow((ListOres[t].OreLocation.x - parentrefinery->location.x), 2) + pow((ListOres[t].OreLocation.y - parentrefinery->location.y), 2));
+        if (Distance < previousdistance && !ListOres[t].currentlygettingmined)
+        {
+            previousdistance = Distance;
+           CurrentOreBeingMined = &ListOres[t];
+           id = ListOres[t].ido;
+        }
 
+        if (ListOres.size() < 0)
+        {
+            //remove lists Ore clusters
+            ListOres.erase(ListOres.begin() + t);
+        }
+    }
+}
 
 void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money, std::vector<std::vector<Node>>& Nodelist)
 {
+    //Breaks when more than one truck
+    //breaks when refinery is placed on top of ore, need to fix
+    // breaks when ore is on another building causing to break?
+    //end node seems to be getting set to state 1? thats why it gets stuck
+    //fix moneytext
     for (int i = 0; i < childtrucks.size(); ++i)
     {
-        double previousdistance = 10000;
-        MoneyText(1, DT);
-        childtrucks[i].NormalizeDir();
-        switch (childtrucks[i].s) {
-        case 1:
-            //IDLE
-
-            for (int t = 0; t < ListOres.size(); ++t)
-            {
-
-               
-                auto Distance = sqrt(pow((ListOres[t].OreLocation.x - childtrucks[i].parentrefinery->location.x), 2) + pow((ListOres[t].OreLocation.y - childtrucks[i].parentrefinery->location.y), 2));
-                if (Distance < previousdistance && !ListOres[t].currentlygettingmined)
-                {
-                    previousdistance = Distance;
-                   // childtrucks[i].FindPath(Nodelist);
-                    childtrucks[i].CurrentOreBeingMined = &ListOres[t];
-                    childtrucks[i].id = ListOres[t].ido;
-                }
-
-                if (ListOres.size() == 0)
-                {
-                    //remove lists Ore clusters
-                    ListOres.erase(ListOres.begin() + t);
-                }
-            }
-            childtrucks[i].CurrentOreBeingMined->currentlygettingmined = true;
-            if (!(childtrucks[i].target == childtrucks[i].location))
-            {
-                childtrucks[i].TroopPathINIT(childtrucks[i].CurrentOreBeingMined->OreLocation, Nodelist);
-                childtrucks[i].s = childtrucks[i].MOVINGTOORE;
-            }
-
-            break;
-        case 2:
            
-            Vector2 leaderTarget = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
-            
-              
-            if (Vector2Distance(childtrucks[i].location, childtrucks[i].target) < 0.01f)
-            {
-
-                childtrucks[i].indy++;
-            }
-           
-             childtrucks[i].target = leaderTarget;
-             childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x  ,  childtrucks[i].target.y - childtrucks[i].hitbox.y });
-
-            if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
-            {
-                childtrucks[i].isactive = false;
-                childtrucks[i].indy = 0;
-                childtrucks[i].path.clear();
-                childtrucks[i].s = childtrucks[i].INITIATETIMER;
-            }
-
-
-            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-
+              childtrucks[i].NormalizeDir();
+           // childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x, childtrucks[i].target.y - childtrucks[i].hitbox.y});
+             MoneyText(DT);
           
-            break;
-        case 3:
-            //MOVINGBACK
-            leaderTarget = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
-
-            if (Vector2Distance(childtrucks[i].location, childtrucks[i].target) < 0.01f)
+            
+            if (childtrucks[i].state == 0)
             {
-
-                childtrucks[i].indy++;
+                //idle
+                childtrucks[i].FindOre(10000000, ListOres);
+                childtrucks[i].CurrentOreBeingMined->currentlygettingmined = true;
+                childtrucks[i].TroopPathINIT(childtrucks[i].CurrentOreBeingMined->OreLocation, Nodelist);
+                childtrucks[i].state = 1;
             }
 
-            childtrucks[i].target = leaderTarget;
-            childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x  ,  childtrucks[i].target.y - childtrucks[i].hitbox.y });
-
-            if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+            if (childtrucks[i].state == 1)
             {
-                childtrucks[i].isactive = false;
-                childtrucks[i].indy = 0;
-                childtrucks[i].path.clear();
-                
-                DT = true;
-                StartTimer(&MT, double(0.2));
-                money++;
-                childtrucks[i].s = childtrucks[i].IDLE;
-            }
-
-            childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-         
-            break;
-        case 4:
-            //INITIATETIMER
-            //seconds
-            StartTimer(&childtrucks[i].timespentmining, double(childtrucks[i].CurrentOreBeingMined->minetime));
-            childtrucks[i].s = childtrucks[i].CURRENTLYMINING;
-
-            break;
-        case 5:
-            //CURRENTLYMINING
-
-            if (TimerDone(childtrucks[i].timespentmining))
-            {
-
-                for (int y = 0; y < ListOres.size(); ++y)
+                //go to ore
+                float result = Vector2Distance(childtrucks[i].location, childtrucks[i].target);
+                if (result < 0.01f)
                 {
-                    if (childtrucks[i].id == ListOres[y].ido)
+                    childtrucks[i].indy++;
+                }
+               
+                childtrucks[i].target = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+
+                
+               
+                childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
+                if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+                {
+                    childtrucks[i].isactive = false;
+                    childtrucks[i].indy = 0;
+                    childtrucks[i].path.clear();
+                    childtrucks[i].state = 2;
+                    break;
+                }
+            }
+
+            if (childtrucks[i].state == 2)
+            {
+                //go back
+                if (childtrucks[i].timespentmining.lifeTime <= 0)
+                {
+                    StartTimer(&childtrucks[i].timespentmining, double(childtrucks[i].CurrentOreBeingMined->minetime));
+                }
+                
+
+                if (TimerDone(childtrucks[i].timespentmining))
+                {
+                    childtrucks[i].TroopPathINIT(childtrucks[i].parentrefinery->location, Nodelist);
+                    childtrucks[i].state = 3;
+                    childtrucks[i].timespentmining.lifeTime = 0;
+                    for (int y = 0; y < ListOres.size(); ++y)
                     {
-                        ListOres[y].Rectangle.height -= 1;
-                        ListOres[y].Rectangle.width -= 1;
-                        ListOres[y].orehealth--;
-                        childtrucks[i].CurrentOreBeingMined->currentlygettingmined = false;
-                        if (ListOres[y].orehealth == 0)
+                        if (childtrucks[i].id == ListOres[y].ido)
                         {
-                            ListOres.erase(ListOres.begin() + y);
+                            ListOres[y].Rectangle.height -= 1;
+                            ListOres[y].Rectangle.width -= 1;
+                            ListOres[y].orehealth--;
+                            ListOres[y].currentlygettingmined = false;
+                            if (ListOres[y].orehealth < 0)
+                            {
+                                ListOres.erase(ListOres.begin() + y);
+                            }
                         }
                     }
-
-
                 }
-                //childtrucks[i].target = childtrucks[i].parentrefinery->location;
-                childtrucks[i].TroopPathINIT(childtrucks[i].parentrefinery->location, Nodelist);
-                childtrucks[i].s = childtrucks[i].MOVINGBACK;
-            }
-            break;
-        case 6:
-            // NOORES
-            break;
 
-        }
+
+
+            }
+
+            if (childtrucks[i].state == 3)
+            {
+                float result = Vector2Distance(childtrucks[i].location, childtrucks[i].target);
+                if (result < 0.01f)
+                {
+                    childtrucks[i].indy++;
+                }
+
+                childtrucks[i].target = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+
+
+
+                childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
+                if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+                {
+                    money++;
+                    //StartTimer(&MT, 0.01);
+                    childtrucks[i].isactive = false;
+                    childtrucks[i].indy = 0;
+                    childtrucks[i].path.clear();
+                    childtrucks[i].state = 0;
+                    break;
+                }
+            }
+
+            
+        
+        
+     
         UpdateTroopHitbox(childtrucks[i].hitbox, childtrucks[i].location);
     }
 }
+
+
+
+
 void CommandCenter::initializeCC(Vector2 GlobalMouse, Texture2D* texture)
 {
    
