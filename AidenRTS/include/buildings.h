@@ -6,8 +6,7 @@
 #include <cmath>
 #include "orebehaviour.h"
 #include "troops.h"
-
-
+#include "renderer.h"
 
 class Building{
 public:
@@ -20,9 +19,9 @@ public:
     float buildinghealth = 0;
     float buildingmaxhealth = 0;
     std::vector<Vector2> attackpoints;
-    void DrawHealth();
-    void DrawBTexture();
+    BuildingRenderer BROBJ;
     float CalculateHealthBoxWidth();
+    void SetNodes(std::vector<std::vector<Node>>& Nodelist);
 };
 
 class Refinery: public Building {
@@ -31,7 +30,7 @@ public:
     Timer MT;
     void UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& ListOres, int& money, std::vector<std::vector<Node>>& Nodelist);
     void MoneyText( bool& d);
-    bool DT = false;
+    bool MoneyAnimCheck = false;
     void DrawGUI();
 };
 
@@ -47,15 +46,17 @@ public:
     Circle range;
     Color BC;
     void initializeCC(Vector2 GlobalMouse, Texture2D* texture);
-    void DrawCommandCenter();
+    
 };
-void CreateNewRefinery( std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, std::vector<Building*>& FriendlyBuildings);
 
 class Barrack : public Building {
 public:
    void DrawGUI();
 
 };
+
+
+void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, std::vector<Building*>& FriendlyBuildings);
 void CreateNewPowerPlant(std::vector<PowerPlant>& PowerPlants, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture, std::vector<Building*>& FriendlyBuildings);
 void CreateNewBarracks(std::vector<Barrack>& Barracks, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings, Texture2D* texture,std::vector<Building*>& FriendlyBuildings);
 void GenerateAttackPoints(Building* ABuilding);

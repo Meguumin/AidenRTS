@@ -32,6 +32,161 @@ void CalcGandF(Node* current, std::vector<Node*> adjacents)
    
 }
        
+void GenericMovement::PathINIT(Vector2 Globalmouse, std::vector<std::vector<Node>>& Nodelist, Troop& TroopOBJ)
+{
+
+    TroopOBJ.AHOBJ->indy = 0;
+    std::pair<short, short> pointerindex = GetGridIndex(Globalmouse);
+    std::pair<short, short> soldierindex = GetGridIndex(TroopOBJ.location);
+
+    Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    endnode = &Nodelist[pointerindex.second][pointerindex.first];
+    endnode->state = 0;
+    CalcH(Nodelist, endnode, 1000, 1000);
+    startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    /*
+      if (!PHOBJ.endnode->state == 1)
+      {
+          PHOBJ.endnode->state = 0;
+      }
+       */
+    startnode->state = 0;
+
+    FindPath(TroopOBJ, Nodelist);
+
+    TroopOBJ.isactive = true;
+
+}
+
+
+void GenericMovement::FindPath(Troop& TroopOBJ, std::vector<std::vector<Node>>& Nodelist)
+{
+    TroopOBJ.PHOBJ.path.clear();
+
+    while (!Queue.empty())
+    {
+        Node* current = Queue[0];
+        std::vector<Node*> ADJ = GetAdjCells(Nodelist, current, 1000, 1000);
+        CalcGandF(current, ADJ);
+        Queue.erase(Queue.begin());
+        for (auto obj : ADJ)
+        {
+            obj->nodevisited = true;
+            visited.push_back(obj);
+            Queue.push_back(obj);
+        }
+        std::sort(Queue.begin(), Queue.end(), CompareNode);
+
+        if (current == endnode)
+        {
+
+            while (current != startnode)
+            {
+                TroopOBJ.PHOBJ.path.insert(TroopOBJ.PHOBJ.path.begin(), current); // Insert at the beginning
+                current = current->parent;
+
+
+            }
+
+            for (auto obj : visited)
+            {
+                obj->nodevisited = false;
+                obj->parent = NULL;
+                obj->multi = 1;
+            }
+
+
+            visited.clear();
+            Queue.clear();
+            break;
+        }
+    }
+}
+
+
+
+
+
+void MeleeMovement::FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding, Troop &TroopOBJ)
+{
+    Vector2 temp = { 0,0 };
+    float current = 0;
+    float prev = 10000000;
+    TroopOBJ.AHOBJ->indy = 0;
+    for (auto i : ABuilding->attackpoints)
+    {
+
+        current = Vector2Distance(i, TroopOBJ.location);
+
+        if (current < prev)
+        {
+            temp = i;
+            prev = current;
+        }
+
+    }
+
+    std::pair<short, short> pointerindex = GetGridIndex(temp);
+    std::pair<short, short> soldierindex = GetGridIndex(TroopOBJ.location);
+
+    TroopOBJ.PHOBJ.Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    TroopOBJ.PHOBJ.endnode = &Nodelist[pointerindex.second][pointerindex.first];
+
+    TroopOBJ.AHOBJ->buildingattacktarget = ABuilding;
+    CalcH(Nodelist, TroopOBJ.PHOBJ.endnode, 1000, 1000);
+    TroopOBJ.PHOBJ.startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    TroopOBJ.PHOBJ.endnode->state = 0;
+    TroopOBJ.PHOBJ.startnode->state = 0;
+
+
+    TroopOBJ.PHOBJ.FindPath(TroopOBJ, Nodelist);
+    TroopOBJ.isactive = true;
+    TroopOBJ.AHOBJ->attackmode = true;
+
+}
+
+void MeleeMovement::FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist, Troop &TroopOBJ)
+{
+
+    std::pair<short, short> enemyindex = GetGridIndex(Vector2Add(buff.second->location, Vector2{ buff.second->hitbox.width / 2, buff.second->hitbox.height / 2 }));
+    std::pair<short, short> soldierindex = GetGridIndex(TroopOBJ.location);
+
+    TroopOBJ.PHOBJ.Queue.push_back(&Nodelist[soldierindex.second][soldierindex.first]);
+    TroopOBJ.PHOBJ.endnode = &Nodelist[enemyindex.second][enemyindex.first];
+
+
+    CalcH(Nodelist, TroopOBJ.PHOBJ.endnode, 1000, 1000);
+    TroopOBJ.PHOBJ.startnode = &Nodelist[soldierindex.second][soldierindex.first];
+    TroopOBJ.PHOBJ.endnode->state = 0;
+    TroopOBJ.PHOBJ.startnode->state = 0;
+
+
+    TroopOBJ.PHOBJ.FindPath(TroopOBJ, Nodelist);
+    TroopOBJ.isactive = true;
+    TroopOBJ.AHOBJ->attackmode = true;
+
+}
+/*
+void Soldier::DeathMethod(std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Troop*>& OppTotalTroops, std::vector<Soldier>& GridOppSoldier)
+{
+    if (!enem)
+    {
+
+
+        GridOSoldier.erase(GridOSoldier.begin() + indexgrid);
+        TotalTroops[indextotal] = NULL;
+        TotalTroops.erase(TotalTroops.begin() + indextotal);
+    }
+    else {
+        GridOppSoldier.erase(GridOppSoldier.begin() + indexgrid);
+        OppTotalTroops[indextotal] = NULL;
+        OppTotalTroops.erase(OppTotalTroops.begin() + indextotal);
+    }
+}
+*/
+
+
+
 
 // Grid is 1000 x 1000
 std::vector<Node*> GetAdjCells(std::vector<std::vector<Node>>& Nodelist, Node* current, int row, int col) {
@@ -88,7 +243,7 @@ bool CollisionWithOpponentBuildings(std::vector<Building*> GameMap, Vector2 Coll
     {
         if (CheckCollisionPointRec(CollisionPoint, Building->hitbox))
         {
-            ATroop->buildingattacktarget = Building;
+            ATroop->AHOBJ->buildingattacktarget = Building;
             return true;
         }
     }

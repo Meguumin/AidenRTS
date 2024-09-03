@@ -6,80 +6,69 @@
 #include <algorithm> 
 #include <cmath>
 #include "pathfinding.h"
-
-
+#include "renderer.h"
+#include "attackhandler.h"
 class Refinery;
 class Ore;
 class Soldier;
 class Medic;
+class DeathHandler;
+
+
 
 class Troop {
 public:
+
     bool isactive = false;
     Vector2 target = { 0 };
-
     bool enem = false;
-    virtual void FindAttackTroop();
-    virtual void KillTroop();
-    virtual void AttackBuilding();
-    virtual void AttackTroop();
-    virtual void FindAttackPathForBuilding();
+
+    
     Vector2 location = { 0 };
     Vector2 direction = { 0,0 };
-    std::vector<Node*> visited;
-    std::vector<Node*> path;
-    std::vector<Node*> Queue;
+ 
+    
 
     float rotation = 0;
     float health = 0;
     float maxhealth = 0;
-    int attackdmg = 0;
-    Timer attackcircle;
-    float acr = 0;
+  
 
     bool setupmovement = false;
     bool maintain = false;
 
-    bool attackmode = false;
-    bool isattacking = false;
-    bool startattackanimation = false;
    
     float prevhealthboxwidth = 0;
     float movementspeed = 0;
-    int indy = 0;
-
     short formationposition = 0;
     short groupsize = 0;
-    Node* startnode;
-    Node* endnode;
 
-    Troop* troopattacktarget;
-    Building* buildingattacktarget;
+    GenericMovement PHOBJ;
+    TroopRenderer TROBJ;
+    AttackHandler* AHOBJ = nullptr;
+    DeathHandler* DHOBJ = nullptr;
 
     Rectangle hitbox = { 0, 0 ,0 , 0 };
-    void FindPath(std::vector<std::vector<Node>>& Nodelist);
-    void ResetAttack();
+
     void NormalizeDir();
-    void DrawHealth();
-    void DrawLine();
     float CalculateHealthBoxWidth();
     void ExitAnimation();
-   
+    
     int GetAttackType();
     
-    void TroopPathINIT(Vector2 Globalmouse, std::vector<std::vector<Node>>& Nodelist);
+  
     Color Dcolor;
+    short indextotal = 0;
+    short indexgrid = 0;
 };
-
 
 class Soldier : public Troop {
 public:
-    virtual void AttackBuilding();
-    virtual void AttackTroop();
-    virtual void FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding);
-    virtual void FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist);
-    virtual void KillTroop(std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Troop*>& OppTotalTroops, std::vector<Soldier>& GridOppSoldier);
+    MeleeMovement MMOBJ;
+    
+    
 };
+
 class Medic : public Troop {
 
 public:
@@ -88,12 +77,11 @@ public:
 
 class Truck : public Troop {
 public:
-    //will change later, star to get back value
-    Refinery* parentrefinery;
-    int state = 0;
+    Refinery* parentrefinery; 
     Ore* CurrentOreBeingMined;
+    int state = 0;
     int id = 0;
-;   // float moneyheld = 0;
+    
     
     Timer timespentmining;
     void FindOre(float previousdistance, std::vector <Ore>& ListOres);
@@ -104,6 +92,7 @@ enum typeofmovement {
     random ,
     square ,
 };
+
 
 
 

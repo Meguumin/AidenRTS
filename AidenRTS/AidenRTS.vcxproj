@@ -135,14 +135,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AidenRTS.cpp" />
-    <ClCompile Include="audiohandler.cpp" />
+    <ClCompile Include="attackhandler.cpp" />
     <ClCompile Include="buildings.cpp" />
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="deathhandler.cpp" />
     <ClCompile Include="drawgui.cpp" />
     <ClCompile Include="misc.cpp" />
     <ClCompile Include="opponentbehaviour.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="orebehaviour.cpp" />
+    <ClCompile Include="renderer.cpp" />
     <ClCompile Include="troops.cpp" />
     <ClCompile Include="troopselection.cpp" />
   </ItemGroup>
@@ -150,7 +152,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\audiohandler.h" />
+    <ClInclude Include="attackhandler.h" />
+    <ClInclude Include="deathhandler.h" />
     <ClInclude Include="include\buildings.h" />
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\drawgui.h" />
@@ -162,6 +165,7 @@
     <ClInclude Include="include\raymath.h" />
     <ClInclude Include="include\troops.h" />
     <ClInclude Include="include\troopselection.h" />
+    <ClInclude Include="renderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

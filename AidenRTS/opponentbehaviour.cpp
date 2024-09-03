@@ -36,6 +36,8 @@ void  Opponent::CreateOppBarracks(Texture2D* texture, std::vector<Building*>& To
 void Opponent::CreateSoldier()
 {
     Soldier newSoldier;
+    
+
     newSoldier.enem = true;
     newSoldier.health = 100;
     newSoldier.maxhealth = 100;
@@ -45,7 +47,15 @@ void Opponent::CreateSoldier()
     newSoldier.location = Vector2{base.location.x + GetRandomValue(60, -60), base.location.y + GetRandomValue(0, -60) };
     newSoldier.hitbox = { newSoldier.location.x,   newSoldier.location.y,15,15 };
     newSoldier.Dcolor = RED;
-    newSoldier.attackdmg = 10;
+    if (newSoldier.AHOBJ == NULL)
+    {
+        newSoldier.AHOBJ = new MeleeHandler;
+    }
+    //newSoldier.AHOBJ.attackdmg = 10;
+    newSoldier.indextotal = OppTotalTroops.size();
+
+    newSoldier.indexgrid = GridOppSoldier.size();
     GridOppSoldier.push_back(newSoldier);
     OppTotalTroops.push_back(&GridOppSoldier.front());
+   
 }

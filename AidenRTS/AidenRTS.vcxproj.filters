@@ -41,10 +41,16 @@
     <ClCompile Include="drawgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="audiohandler.cpp">
+    <ClCompile Include="opponentbehaviour.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="opponentbehaviour.cpp">
+    <ClCompile Include="renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="attackhandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deathhandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -52,9 +58,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\audiohandler.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="include\drawgui.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -86,6 +89,15 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="include\camera.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="attackhandler.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="deathhandler.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>

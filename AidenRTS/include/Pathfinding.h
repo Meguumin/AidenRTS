@@ -26,6 +26,34 @@ struct Node
 	//Switch Statement For c
 };
 	
+class PathfindingHandler
+{
+	public:
+		Node* startnode;
+		Node* endnode;
+
+		std::vector<Node*> visited;
+		std::vector<Node*> path;
+		std::vector<Node*> Queue;
+
+		
+};
+
+class GenericMovement : public PathfindingHandler
+{
+public:
+	void PathINIT(Vector2 Globalmouse, std::vector<std::vector<Node>>& Nodelist, Troop& TroopOBJ);
+	void FindPath(Troop& TroopOBJ, std::vector<std::vector<Node>>& Nodelist);
+};
+
+class MeleeMovement : public PathfindingHandler
+{
+public:
+	
+	void FindAttackPathForBuilding(Vector2 GlobalMouse, std::vector<std::vector<Node>>& Nodelist, Building* ABuilding, Troop &TroopOBJ);
+	void FindAttackTroop(std::pair<bool, Troop*> buff, std::vector<std::vector<Node>>& Nodelist, Troop &TroopOBJ);
+	//void DeathMethod(std::vector<Soldier>& GridOSoldier, std::vector<Troop*>& TotalTroops, std::vector<Troop*>& OppTotalTroops, std::vector<Soldier>& GridOppSoldier);
+};
 
 
 void GenerateCells(std::vector<std::vector<Node>>& Nodelist, std::vector<Rectangle> GameMap, std::vector<Ore> CrystalMap,int row, int col);

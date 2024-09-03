@@ -11,7 +11,7 @@
 #include "orebehaviour.h"
 #include "misc.h"
 #include "drawgui.h"
-#include "audiohandler.h"
+#include "deathhandler.h"
 #include "opponentbehaviour.h"
 #include <queue>
 #include <vector>
@@ -128,6 +128,7 @@
         int col = 1000;
       
         CommandCenter Top;
+        
         typeofmovement movement = square;
        
         Rectangle slider_rect = { 400, 940, 350, 40 };
@@ -150,6 +151,7 @@
         YourNightmare.CreateSoldier();
 
         TotalBuildings.push_back(&YourNightmare.base);
+        Top.main = &Commandtexture;
         TotalBuildings.push_back(&Top);
         FriendlyBuildings.push_back(&Top);
 
@@ -185,7 +187,48 @@
           }
 
 
+          for (int i = 0; i < GridOSoldier.size(); i++)
+          {
+             
+              if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected, GridOSoldier[i]) && u > 0 && y > 0 && !CheckCollsionMousewithFriendlyBuildings(GlobalMouse, FriendlyBuildings))
+              {
+                  pairbuffer = MouseCollisionWithTroop(YourNightmare.OppTotalTroops, GlobalMouse);
+                  GridOSoldier[i].AHOBJ->ResetAttack();
 
+                  if (CollisionWithGameObjects(GameMap, GlobalMouse))
+                  {
+                      if (CollisionWithOpponentBuildings(YourNightmare.OppTotalBuildings, GlobalMouse, &GridOSoldier[i]))
+                      {
+                          GridOSoldier[i].MMOBJ.FindAttackPathForBuilding(GlobalMouse, Nodelist, TotalTroops[i]->AHOBJ->buildingattacktarget, GridOSoldier[i]);
+                      }
+
+                      //paint buffer first is a bool value to determine if mouse is on an enemy troop
+
+                      else if (pairbuffer.first)
+                      {
+                         
+                          GridOSoldier[i].AHOBJ->troopattacktarget = pairbuffer.second;
+                          GridOSoldier[i].MMOBJ.FindAttackTroop(pairbuffer, Nodelist, GridOSoldier[i]); // Directly calls Soldier::FindAttackTroop
+      
+                      }
+                      else {
+                          GridOSoldier[i].PHOBJ.PathINIT(GlobalMouse, Nodelist, GridOSoldier[i]);
+                      }
+                  }
+              }
+              
+              if (GridOSoldier[i].AHOBJ->troopattacktarget != NULL)
+              {
+                  if (GridOSoldier[i].AHOBJ->troopattacktarget->health <= 0)
+                  {
+                      // GridOSoldier[i].AHOBJ->troopattacktarget->DHOBJ->Death(GridOSoldier[i]);
+                   
+                  }
+              }
+              
+              
+              
+          }
               for (int i = 0; i < TotalTroops.size(); ++i)
               { 
                  //TotalTroops[i]->ExitAnimation();
@@ -194,45 +237,13 @@
                   {
                       TotalTroops[i]->NormalizeDir();
                   }
-                 
-                  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && IsUnitSelected(TroopSelected,*TotalTroops[i]) && u > 0 && y > 0 && !CheckCollsionMousewithFriendlyBuildings(GlobalMouse, FriendlyBuildings))
-                  {
-                      pairbuffer = MouseCollisionWithTroop(YourNightmare.OppTotalTroops, GlobalMouse);
-                      TotalTroops[i]->ResetAttack();
-
-                      if (CollisionWithGameObjects(GameMap, GlobalMouse))
-                      {
-                        if (CollisionWithOpponentBuildings(YourNightmare.OppTotalBuildings, GlobalMouse, TotalTroops[i]))
-                        {
-                              TotalTroops[i]->FindAttackPathForBuilding(GlobalMouse, Nodelist, TotalTroops[i]->buildingattacktarget);
-                        }
-                        
-                        //paint buffer first is a bool value to determine if mouse is on an enemy troop
-
-                        else if (pairbuffer.first)
-                        {
-                            if (auto soldier = dynamic_cast<Soldier*>(TotalTroops[i])) {
-                                soldier->troopattacktarget = pairbuffer.second;
-                                soldier->FindAttackTroop(pairbuffer, Nodelist); // Directly calls Soldier::FindAttackTroop
-                            }
-                            else if (auto medic = dynamic_cast<Medic*>(TotalTroops[i])) {
-                              //Medic pathfinding
-                            }
-                           
-                        }
-                        else {
-                            TotalTroops[i]->TroopPathINIT(GlobalMouse, Nodelist);
-                        }
-                       }                        
-                   }
-
-               
-                  if(TotalTroops[i]->isactive && TotalTroops[i]->path.size() > 0)
+                    
+                  if(TotalTroops[i]->isactive && TotalTroops[i]->PHOBJ.path.size() > 0)
                   {
                      FollowMouse(movement, *TotalTroops[i], TroopSelected, Nodelist);
                   }
 
-                  if (TotalTroops[i]->isattacking)
+                  if (TotalTroops[i]->AHOBJ->isattacking)
                   {
                       switch (TotalTroops[i]->GetAttackType())
                       {
@@ -240,11 +251,11 @@
 
                       case 1:
                           //building attack target
-                          TotalTroops[i]->AttackBuilding();
+                          TotalTroops[i]->AHOBJ->AttackBuilding();
                           break;
                       case 2:
                           //troop attack target
-                          TotalTroops[i]->AttackTroop();
+                          TotalTroops[i]->AHOBJ->AttackTroop();
                           break;
                       }
                      
@@ -265,30 +276,21 @@
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && u > 0 && y > 0)
               {
                   ManageCreationOfBuilding(PlacementS, GlobalMouse, Refineries, money, Top, Barracks, TotalBuildings, Buttons, Barracktexture, FriendlyBuildings, PowerPlants, PowerPlanttexture);
-                 
-                  //This checks all buildings which could get bad, build into functions later
+     
                   for (int i = 0; i < TotalBuildings.size(); ++i)
                   {
-                      std::pair<short, short> index = GetGridIndex(Vector2{ TotalBuildings[i]->location.x, TotalBuildings[i]->location.y });
-                      for (int t = 0; t < ceil(TotalBuildings[i]->hitbox.width / 11); ++t)
-                      {
-                          for (int y = 0; y < ceil(TotalBuildings[i]->hitbox.height / 11); ++y)
-                          {
-                              Nodelist[index.second + y][index.first + t].state = 1;
-                              //4 meaning building nodes
-                          }
-                      }
+                      TotalBuildings[i]->SetNodes(Nodelist);
                   }
               }
 
             
 
+              //Top.placeCC(GlobalMouse);
               if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !Top.CommandCenterPlaced)
               {
-                  Top.initializeCC(GlobalMouse, &Commandtexture);
-                 
-              }
+                  Top.initializeCC(GlobalMouse, Top.main);
 
+              }
               for (int i = 0; i < ListOres.size(); ++i)
               {
                   ListOres[i].randomrotation += 0.01f ;
@@ -362,9 +364,10 @@
             }
             else
             {
-                Top.DrawCommandCenter();
+                Top.BROBJ.DrawCommandCenter(Top);
             }
-           YourNightmare.base.DrawCommandCenter();
+
+            YourNightmare.base.BROBJ.DrawCommandCenter(YourNightmare.base);
 
             for (int i = 0; i < ListOres.size(); ++i)
             { 
@@ -375,22 +378,22 @@
 
             for (int i = 0; i < Barracks.size(); ++i)
             {               
-                Barracks[i].DrawBTexture();
+                Barracks[i].BROBJ.DrawBTexture(Barracks[i]);
             }
             for (int i = 0; i < PowerPlants.size(); ++i)
             {
-                PowerPlants[i].DrawBTexture();
+                PowerPlants[i].BROBJ.DrawBTexture(PowerPlants[i]);
             }
 
             for (int i = 0; i < YourNightmare.OppBarracks.size(); ++i)
             {
-                YourNightmare.OppBarracks[i].DrawBTexture();
+                YourNightmare.OppBarracks[i].BROBJ.DrawBTexture(YourNightmare.OppBarracks[i]);
             }
 
             for (auto i : TotalBuildings)
             {
                 i->CalculateHealthBoxWidth();
-                i->DrawHealth();
+                i->BROBJ.DrawHealth(*i);
      
             }
 
@@ -398,17 +401,14 @@
             {
 
                 DrawRectangleRec(TotalTroops[i]->hitbox, TotalTroops[i]->Dcolor);
-               
-                if (!TotalTroops[i]->startattackanimation)
-                {
-                    StartTimer(&TotalTroops[i]->attackcircle, 0.2);
-                    TotalTroops[i]->startattackanimation = true;
-                }
+                
+                //make most of these functions
+                TotalTroops[i]->TROBJ.UpdateCircleValue(*TotalTroops[i]);
 
-                DrawCircle(TotalTroops[i]->location.x, TotalTroops[i]->location.y, TotalTroops[i]->acr, Fade(YELLOW, 0.5));
+                DrawCircle(TotalTroops[i]->location.x, TotalTroops[i]->location.y, TotalTroops[i]->AHOBJ->acr, Fade(YELLOW, 0.5));
                 if (IsUnitSelected(TroopSelected,  *TotalTroops[i]))
                 {
-                    TotalTroops[i]->DrawHealth();
+                    TotalTroops[i]->TROBJ.DrawHealth(*TotalTroops[i]);
                 }
               
                 if (std::find(TroopSelected.begin(), TroopSelected.end(), TotalTroops[i]) != TroopSelected.end())
@@ -421,19 +421,23 @@
                 DrawLineEx(GetCenterPositionOfRectangle(TotalTroops[i]->location, TotalTroops[i]->hitbox), CalculateEnd(TotalTroops[i]), 1, BLACK);
             }
 
+
             for (int i = 0; i < YourNightmare.OppTotalTroops.size(); ++i)
             {
                 DrawRectangleRec(YourNightmare.OppTotalTroops[i]->hitbox, YourNightmare.OppTotalTroops[i]->Dcolor);
                 if (YourNightmare.OppTotalTroops[i]->health < YourNightmare.OppTotalTroops[i]->maxhealth)
                 {
-                    YourNightmare.OppTotalTroops[i]->DrawHealth();
-                }                
+           
+                    YourNightmare.OppTotalTroops[i]->TROBJ.DrawHealth(*YourNightmare.OppTotalTroops[i]);
+                }      
             }
+
+
             if (TroopSelected.size() > 0)
             {
                 for (int i = 0; i < TroopSelected.size(); ++i)
                 {
-                    TroopSelected[i]->DrawLine();
+                    TroopSelected[i]->TROBJ.DrawHealth(*TroopSelected[i]);
                 }
 
             }
@@ -441,7 +445,7 @@
             for (int i = 0; i < Refineries.size(); ++i)
             {
                 DrawRectangleRec(Refineries[i].hitbox, ORANGE);
-                if (Refineries[i].DT == true)
+                if (Refineries[i].MoneyAnimCheck == true)
                 {
                     DrawText("+1$", int(Refineries[i].location.x - 10), int(Refineries[i].location.y - 10), 10, Fade(GREEN, float(0.2)));
                 }

@@ -1,9 +1,9 @@
 #pragma once
 #include "buildings.h"
-#include "troops.h"
 #include "raylib.h"
 
-
+class Troop;
+class Soldier;
 
 struct Opponent 
 {

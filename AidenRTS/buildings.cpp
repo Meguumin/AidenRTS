@@ -8,7 +8,7 @@ void ManageCreationOfBuilding(int PlacementS, Vector2 GlobalMouse, std::vector<R
     {
         switch (PlacementS) {
         case 1:
-            //
+            // remember to add build points
             money -= 500;
             CreateNewRefinery(Refineries, GlobalMouse, TotalBuildings,FriendlyBuildings);
             break;
@@ -32,10 +32,7 @@ void GenerateAttackPoints(Building* ABuilding)
     ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x,   ABuilding->location.y + ABuilding->hitbox.width / 2 });
     ABuilding->attackpoints.push_back(Vector2{ ABuilding->location.x + ABuilding->hitbox.width,   ABuilding->location.y + ABuilding->hitbox.width / 2 });
 }
-void Building::DrawBTexture()
-{
-    DrawTexture(*main, hitbox.x, hitbox.y  , WHITE);
-}
+
 void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, std::vector<Building*>& TotalBuildings,  std::vector<Building*>& FriendlyBuildings)
 {
     Truck newTruck;
@@ -58,6 +55,10 @@ void CreateNewRefinery(std::vector<Refinery>& Refineries, Vector2 GlobalMouse, s
     newTruck.hitbox = { 0,0,15,15 };
    // newTruck.hitbox = { 0, 0 , 60 , 30 };
     newTruck.Dcolor = RED;
+    if (newTruck.AHOBJ == NULL)
+    {
+        newTruck.AHOBJ = new MeleeHandler;
+    }
     UpdateTroopHitbox(newTruck.hitbox, newTruck.location);
     newRefinery.childtrucks.push_back(newTruck);
 
@@ -114,12 +115,7 @@ void Refinery::MoneyText( bool& d)
     }
 }
 
-void Building::DrawHealth()
-{
-    DrawRectangleRec(Rectangle{ hitbox.x,hitbox.y - 4,hitbox.width, 2 }, RED);
-    DrawRectangleRec(Rectangle{ hitbox.x,hitbox.y - 4,CalculateHealthBoxWidth(), 2 }, GREEN);
 
-}
 float Building::CalculateHealthBoxWidth()
 {
     float percent = buildinghealth / buildingmaxhealth;
@@ -159,15 +155,19 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
            
               childtrucks[i].NormalizeDir();
            // childtrucks[i].direction = Vector2Normalize(Vector2{ childtrucks[i].target.x - childtrucks[i].hitbox.x, childtrucks[i].target.y - childtrucks[i].hitbox.y});
-             MoneyText(DT);
-          
+             
+              if (MoneyAnimCheck == true)
+              {
+                  MoneyText(MoneyAnimCheck);
+              }
             
             if (childtrucks[i].state == 0)
             {
                 //idle
+                
                 childtrucks[i].FindOre(10000000, ListOres);
                 childtrucks[i].CurrentOreBeingMined->currentlygettingmined = true;
-                childtrucks[i].TroopPathINIT(childtrucks[i].CurrentOreBeingMined->OreLocation, Nodelist);
+                childtrucks[i].PHOBJ.PathINIT(childtrucks[i].CurrentOreBeingMined->OreLocation, Nodelist, childtrucks[i]);
                 childtrucks[i].state = 1;
             }
 
@@ -177,19 +177,19 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
                 float result = Vector2Distance(childtrucks[i].location, childtrucks[i].target);
                 if (result < 0.01f)
                 {
-                    childtrucks[i].indy++;
+                    childtrucks[i].AHOBJ->indy++;
                 }
                
-                childtrucks[i].target = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+                childtrucks[i].target = Vector2{ float(childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy]->xpos) , float(childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy]->ypos) };
 
                 
                
                 childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-                if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+                if (childtrucks[i].PHOBJ.endnode == childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy])
                 {
                     childtrucks[i].isactive = false;
-                    childtrucks[i].indy = 0;
-                    childtrucks[i].path.clear();
+                    childtrucks[i].AHOBJ->indy = 0;
+                    childtrucks[i].PHOBJ.path.clear();
                     childtrucks[i].state = 2;
                     break;
                 }
@@ -206,7 +206,7 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
 
                 if (TimerDone(childtrucks[i].timespentmining))
                 {
-                    childtrucks[i].TroopPathINIT(childtrucks[i].parentrefinery->location, Nodelist);
+                    childtrucks[i].PHOBJ.PathINIT(childtrucks[i].parentrefinery->location, Nodelist, childtrucks[i]);
                     childtrucks[i].state = 3;
                     childtrucks[i].timespentmining.lifeTime = 0;
                     for (int y = 0; y < ListOres.size(); ++y)
@@ -234,21 +234,22 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
                 float result = Vector2Distance(childtrucks[i].location, childtrucks[i].target);
                 if (result < 0.01f)
                 {
-                    childtrucks[i].indy++;
+                    childtrucks[i].AHOBJ->indy++;
                 }
 
-                childtrucks[i].target = Vector2{ float(childtrucks[i].path[childtrucks[i].indy]->xpos) , float(childtrucks[i].path[childtrucks[i].indy]->ypos) };
+                childtrucks[i].target = Vector2{ float(childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy]->xpos) , float(childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy]->ypos) };
 
 
 
                 childtrucks[i].location = Vector2MoveTowards(childtrucks[i].location, childtrucks[i].target, childtrucks[i].movementspeed * GetFrameTime());
-                if (childtrucks[i].endnode == childtrucks[i].path[childtrucks[i].indy])
+                if (childtrucks[i].PHOBJ.endnode == childtrucks[i].PHOBJ.path[childtrucks[i].AHOBJ->indy])
                 {
                     money++;
-                    //StartTimer(&MT, 0.01);
+                    StartTimer(&MT, 0.2);
+                    MoneyAnimCheck = true;
                     childtrucks[i].isactive = false;
-                    childtrucks[i].indy = 0;
-                    childtrucks[i].path.clear();
+                    childtrucks[i].AHOBJ->indy = 0;
+                    childtrucks[i].PHOBJ.path.clear();
                     childtrucks[i].state = 0;
                     break;
                 }
@@ -263,7 +264,18 @@ void Refinery::UpdateTrucks(std::vector<Truck>& childtrucks, std::vector<Ore>& L
 }
 
 
-
+void Building::SetNodes(std::vector<std::vector<Node>>& Nodelist)
+{
+    std::pair<short, short> index = GetGridIndex(Vector2{location.x, location.y });
+    for (int t = 0; t < ceil(hitbox.width / 11); ++t)
+    {
+        for (int y = 0; y < ceil(hitbox.height / 11); ++y)
+        {
+            Nodelist[index.second + y][index.first + t].state = 1;
+            //4 meaning building nodes
+        }
+    }
+}
 
 void CommandCenter::initializeCC(Vector2 GlobalMouse, Texture2D* texture)
 {
@@ -280,13 +292,14 @@ void CommandCenter::initializeCC(Vector2 GlobalMouse, Texture2D* texture)
  
    
 }
-
-void CommandCenter::DrawCommandCenter()
+/*
+* void CommandCenter::placeCC(Vector2 GlobalMouse)
 {
-   
-    DrawTexture(*main,hitbox.x, hitbox.y,  WHITE );
-    DrawCircleObj(range, WHITE, 2);
+    
 }
+*/
+
+
 void Refinery::DrawGUI()
 {
 
